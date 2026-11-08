@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/*
+  Charte graphique Ma Coordo
+  - creme : fond principal (beige clair)
+  - or    : couleur d'accent (brun-doré)
+  - encre : texte (brun foncé)
+*/
+@theme {
+  --color-creme: #f4ede4;
+  --color-creme-fonce: #e9dfd2;
+  --color-or: #a07e5e;
+  --color-or-fonce: #86684b;
+  --color-or-clair: #d9c6b1;
+  --color-encre: #3b3330;
+  --color-encre-doux: #6e625c;
+  --color-blanc: #fffdfa;
+  --color-alerte: #b5523b;
+  --color-succes: #5f7d5a;
+
+  --font-sans: var(--font-poppins), system-ui, sans-serif;
+
+  --radius-carte: 1.25rem;
+}
+
+html {
+  /* Texte un peu plus grand par défaut : lisible debout, en plein mariage */
+  font-size: 17px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--color-creme);
+  color: var(--color-encre);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-or-clair);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-or);
+  outline-offset: 2px;
+}
