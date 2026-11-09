@@ -31,7 +31,7 @@ Choix validés avec Laura, à respecter dans la suite du développement.
 
 ## Mentions légales
 - Éditeur : Laura Weddings & Events, SIRET 831 141 957 00033,
-  laura.weddings.events@gmail.com. Adresse postale à compléter.
+  laura.weddings.events@gmail.com, 2 rue Serge Sabatier, 13140 Miramas.
 
 ## Prévu plus tard (prévoir la structure)
 - Modèles de déroulés, plusieurs jours, équipes / marque blanche, champ « formule »

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 const EDITEUR = {
   nom: "Laura Weddings & Events",
   siret: "831 141 957 00033",
-  adresse: "[adresse postale à compléter]",
+  adresse: "2 rue Serge Sabatier, 13140 Miramas",
   email: "laura.weddings.events@gmail.com",
 };
 const MISE_A_JOUR = "novembre 2026";
