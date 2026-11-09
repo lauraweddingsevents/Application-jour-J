@@ -36,3 +36,12 @@ Choix validés avec Laura, à respecter dans la suite du développement.
 ## Prévu plus tard (prévoir la structure)
 - Modèles de déroulés, plusieurs jours, équipes / marque blanche, champ « formule »
   (paiements Stripe), vue invités, export PDF, version anglaise.
+
+## Base de données (étape 3)
+- Projet Supabase en région Europe (Paris).
+- Structure dans `supabase/migrations/` (fichiers SQL à exécuter dans l'ordre dans le SQL Editor).
+- Les horaires sont enregistrés en date + heure complètes. À la saisie, une heure entre
+  0 h et 5 h 59 est rattachée à la nuit suivant la date du mariage.
+- Les liens personnels passent par la fonction `vue_intervenant` (jamais d'accès direct
+  aux tables, jamais de téléphone ni d'e-mail d'intervenant).
+- Temps réel : chaque modification envoie un signal sur un canal secret propre au mariage.
