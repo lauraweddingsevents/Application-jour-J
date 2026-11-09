@@ -216,3 +216,14 @@ export async function modifierElementFiche(id: string, e: ElementFicheSaisi) {
 export async function supprimerElementFiche(id: string) {
   verifier(await supabaseNavigateur().from("fiche_elements").delete().eq("id", id));
 }
+
+// ---------- Retard ----------
+export async function decalerMoments(momentId: string, minutes: number, suivants: boolean) {
+  return verifier<number>(
+    await supabaseNavigateur().rpc("decaler_moments", {
+      p_moment: momentId,
+      p_minutes: minutes,
+      p_suivants: suivants,
+    }),
+  );
+}

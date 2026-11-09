@@ -1,8 +1,11 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { AffichageFiche } from "@/components/fiche/AffichageFiche";
 import { Carte } from "@/components/ui/Carte";
+import { Feuille } from "@/components/ui/Feuille";
+import { FormulaireRetard } from "@/components/retard/FormulaireRetard";
+import { supabaseAnonyme } from "@/lib/supabase/anonyme";
 import { Logo } from "@/components/Logo";
 import { dateLongue } from "@/lib/dates";
 import { dureeLisible, estApresMinuit, heureAffichee } from "@/lib/heures";
@@ -13,7 +16,7 @@ type Onglet = "miens" | "tout" | "infos";
 
 export function VueIntervenant() {
   const { jeton } = useParams<{ jeton: string }>();
-  const { etat, derniereMaj, effacerMaj } = useVue(jeton);
+  const { etat, derniereMaj, effacerMaj, recharger } = useVue(jeton);
 
   if (etat.statut === "chargement")
     return <p className="mt-20 text-center text-encre-doux">Chargement de votre déroulé…</p>;
@@ -39,6 +42,8 @@ export function VueIntervenant() {
       horsLigne={etat.horsLigne}
       derniereMaj={derniereMaj}
       effacerMaj={effacerMaj}
+      jeton={jeton}
+      recharger={recharger}
     />
   );
 }
@@ -49,14 +54,24 @@ function Contenu({
   horsLigne,
   derniereMaj,
   effacerMaj,
+  jeton,
+  recharger,
 }: {
   vue: Vue;
   chargeLe: number;
   horsLigne: boolean;
   derniereMaj: string[];
   effacerMaj: () => void;
+  jeton: string;
+  recharger: () => Promise<void>;
 }) {
   const [onglet, setOnglet] = useState<Onglet>("miens");
+  const [retard, setRetard] = useState<MomentVue | null>(null);
+  const [annonce, setAnnonce] = useState("");
+  const fermerRetard = useCallback(() => setRetard(null), []);
+  // Les personnes avec l'accès coordination peuvent signaler un retard
+  const coordination = vue.moi.acces_coordination;
+  const surRetard = coordination && !horsLigne ? setRetard : undefined;
   const maintenant = useMaintenant();
   const tz = vue.mariage.fuseau_horaire;
 
@@ -99,6 +114,17 @@ function Contenu({
         </p>
       </header>
 
+      {coordination && (
+        <p className="mt-4 rounded-2xl bg-or/15 px-4 py-2.5 text-center text-sm text-or-fonce">
+          🎯 Vous avez l&apos;accès coordination : touchez « ⏱ Retard » sur un moment pour décaler les horaires.
+        </p>
+      )}
+      {annonce && (
+        <p className="mt-4 rounded-2xl bg-succes/15 px-4 py-3 text-sm text-succes" role="status">
+          {annonce}
+        </p>
+      )}
+
       {changesMiens.length > 0 && (
         <button
           type="button"
@@ -125,6 +151,7 @@ function Contenu({
             moi={m.intervenants.includes(vue.moi.id)}
             fin={finEffective(m, moments)}
             maintenant={maintenant}
+            onRetard={surRetard}
           />
         ))}
         {prochaineMission && (
@@ -135,6 +162,7 @@ function Contenu({
             moi
             maintenant={maintenant}
             principal
+            onRetard={surRetard}
           />
         )}
         {!prochaineMission && miens.length > 0 && !termine && enCours.length === 0 && (
@@ -190,6 +218,7 @@ function Contenu({
             maintenant={maintenant}
             changes={derniereMaj}
             surligner={onglet === "tout"}
+            onRetard={surRetard}
           />
         )}
         {onglet === "miens" && miens.length === 0 && (
@@ -198,6 +227,32 @@ function Contenu({
           </Carte>
         )}
       </div>
+
+      {coordination && (
+        <Feuille titre="Signaler un retard" ouverte={retard !== null} onFermer={fermerRetard}>
+          {retard && (
+            <FormulaireRetard
+              moment={retard}
+              moments={moments}
+              tz={tz}
+              onValider={async (minutes, suivants) => {
+                const { data, error } = await supabaseAnonyme().rpc("decaler_moments", {
+                  p_moment: retard.id,
+                  p_minutes: minutes,
+                  p_suivants: suivants,
+                  p_jeton: jeton,
+                });
+                if (error) throw error;
+                await recharger();
+                effacerMaj(); // inutile d'afficher « Horaires mis à jour » à l'auteur du changement
+                fermerRetard();
+                setAnnonce(`✓ ${data} moment${data > 1 ? "s" : ""} décalé${data > 1 ? "s" : ""}. Tout le monde voit les nouveaux horaires.`);
+                setTimeout(() => setAnnonce(""), 6000);
+              }}
+            />
+          )}
+        </Feuille>
+      )}
 
       <p className="mt-10 text-center text-xs text-encre-doux">
         Ce lien est personnel : merci de ne pas le partager.
@@ -223,6 +278,7 @@ function EnAvant({
   fin,
   maintenant,
   principal,
+  onRetard,
 }: {
   etiquette: string;
   moment: MomentVue;
@@ -231,6 +287,7 @@ function EnAvant({
   fin?: number;
   maintenant: number;
   principal?: boolean;
+  onRetard?: (m: MomentVue) => void;
 }) {
   const debut = new Date(moment.debut).getTime();
   return (
@@ -259,6 +316,17 @@ function EnAvant({
           {moment.notes}
         </p>
       )}
+      {onRetard && (
+        <button
+          type="button"
+          onClick={() => onRetard(moment)}
+          className={`mt-4 min-h-[48px] w-full rounded-full text-sm font-medium ${
+            principal ? "bg-blanc text-encre" : "bg-or text-blanc"
+          }`}
+        >
+          ⏱ Signaler un retard
+        </button>
+      )}
     </div>
   );
 }
@@ -273,7 +341,9 @@ function ListeMoments({
   maintenant,
   changes,
   surligner,
+  onRetard,
 }: {
+  onRetard?: (m: MomentVue) => void;
   moments: MomentVue[];
   tous: MomentVue[];
   moiId: string;
@@ -330,6 +400,15 @@ function ListeMoments({
                   </p>
                 )}
                 {passe && <p className="mt-1 text-xs text-encre-doux">Terminé</p>}
+                {onRetard && !passe && (
+                  <button
+                    type="button"
+                    onClick={() => onRetard(m)}
+                    className="mt-2 min-h-[40px] rounded-full px-4 text-xs font-medium text-or-fonce ring-1 ring-or-clair"
+                  >
+                    ⏱ Retard
+                  </button>
+                )}
               </div>
             </Carte>
           </li>

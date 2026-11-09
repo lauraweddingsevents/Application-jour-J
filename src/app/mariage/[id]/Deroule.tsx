@@ -3,8 +3,11 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { Bouton } from "@/components/ui/Bouton";
 import { Carte } from "@/components/ui/Carte";
 import { Feuille } from "@/components/ui/Feuille";
+import { FormulaireRetard } from "@/components/retard/FormulaireRetard";
+import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import {
   creerMoment,
+  decalerMoments,
   listerIntervenants,
   listerMoments,
   modifierMoment,
@@ -24,7 +27,10 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
   const [edition, setEdition] = useState<Moment | "nouveau" | null>(null);
   const [reorganiser, setReorganiser] = useState(false);
   const [occupe, setOccupe] = useState(false);
+  const [retard, setRetard] = useState<Moment | null>(null);
+  const [annonce, setAnnonce] = useState("");
   const fermer = useCallback(() => setEdition(null), []);
+  const fermerRetard = useCallback(() => setRetard(null), []);
 
   const charger = useCallback(
     () =>
@@ -39,6 +45,23 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
   useEffect(() => {
     charger();
   }, [charger]);
+
+  // Mises à jour en direct (par exemple un retard signalé par un témoin coordinateur)
+  useEffect(() => {
+    let minuterie: ReturnType<typeof setTimeout> | undefined;
+    const supabase = supabaseNavigateur();
+    const abonnement = supabase
+      .channel(`mariage:${mariage.canal}`)
+      .on("broadcast", { event: "maj" }, () => {
+        clearTimeout(minuterie);
+        minuterie = setTimeout(charger, 400);
+      })
+      .subscribe();
+    return () => {
+      clearTimeout(minuterie);
+      supabase.removeChannel(abonnement);
+    };
+  }, [mariage.canal, charger]);
 
   const parId = useMemo(() => new Map(intervenants.map((i) => [i.id, i])), [intervenants]);
   const lieuxConnus = useMemo(() => {
@@ -96,6 +119,11 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
         </p>
       )}
 
+      {annonce && (
+        <p className="mt-4 rounded-2xl bg-succes/15 px-4 py-3 text-sm text-succes" role="status">
+          {annonce}
+        </p>
+      )}
       {erreur && <p className="mt-4 text-alerte">{erreur}</p>}
       {moments === null && !erreur && <p className="mt-8 text-center text-encre-doux">Chargement…</p>}
       {moments?.length === 0 && (
@@ -127,6 +155,17 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
                 >
                   <CarteMoment moment={m} tz={tz} parId={parId} />
                 </button>
+                {!reorganiser && (
+                  <button
+                    type="button"
+                    onClick={() => setRetard(m)}
+                    aria-label={`Retard sur « ${m.titre} »`}
+                    className="flex w-14 shrink-0 flex-col items-center justify-center gap-0.5 rounded-carte bg-blanc text-[11px] font-medium text-or-fonce ring-1 ring-or-clair/60"
+                  >
+                    <span aria-hidden className="text-lg">⏱</span>
+                    Retard
+                  </button>
+                )}
                 {reorganiser && (
                   <div className="flex flex-col justify-center gap-1">
                     <BoutonFleche
@@ -150,6 +189,23 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
           );
         })}
       </ol>
+
+      <Feuille titre="Signaler un retard" ouverte={retard !== null} onFermer={fermerRetard}>
+        {retard && moments && (
+          <FormulaireRetard
+            moment={retard}
+            moments={moments}
+            tz={tz}
+            onValider={async (minutes, suivants) => {
+              const n = await decalerMoments(retard.id, minutes, suivants);
+              await charger();
+              fermerRetard();
+              setAnnonce(`✓ ${n} moment${n > 1 ? "s" : ""} décalé${n > 1 ? "s" : ""}. Les intervenants voient déjà les nouveaux horaires.`);
+              setTimeout(() => setAnnonce(""), 6000);
+            }}
+          />
+        )}
+      </Feuille>
 
       <Feuille
         titre={edition === "nouveau" ? "Nouveau moment" : "Modifier le moment"}
