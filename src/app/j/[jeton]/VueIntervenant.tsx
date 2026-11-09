@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { AffichageFiche } from "@/components/fiche/AffichageFiche";
 import { Carte } from "@/components/ui/Carte";
@@ -8,6 +8,8 @@ import { FormulaireRetard } from "@/components/retard/FormulaireRetard";
 import { supabaseAnonyme } from "@/lib/supabase/anonyme";
 import { Logo } from "@/components/Logo";
 import { GuideInstallation } from "@/components/GuideInstallation";
+import { BlocAlertes } from "@/components/BlocAlertes";
+import { lireDelai, useAlertesDansLaPage } from "@/lib/alertes";
 import { dateLongue } from "@/lib/dates";
 import { dureeLisible, estApresMinuit, heureAffichee } from "@/lib/heures";
 import { nomMariage } from "@/lib/types";
@@ -90,6 +92,14 @@ function Contenu({
   const termine = moments.length > 0 && maintenant >= finEffective(moments.at(-1)!, moments);
   const pasCommence = moments.length > 0 && maintenant < new Date(moments[0].debut).getTime();
 
+  // Délai d'alerte choisi par l'intervenant (sinon celui du mariage)
+  const [delai, setDelai] = useState(vue.mariage.delai_alerte_defaut);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setDelai(lireDelai(jeton, vue.mariage.delai_alerte_defaut));
+  }, [jeton, vue.mariage.delai_alerte_defaut]);
+  const { alerte, fermer: fermerAlerte } = useAlertesDansLaPage(jeton, miens, delai, maintenant);
+
   const changesMiens = derniereMaj.filter((id) => miens.some((m) => m.id === id));
 
   return (
@@ -114,6 +124,25 @@ function Contenu({
           {vue.moi.role && ` · ${vue.moi.role}`}
         </p>
       </header>
+
+      {alerte && (
+        <button
+          type="button"
+          onClick={fermerAlerte}
+          role="alert"
+          className="fixed inset-x-3 top-3 z-50 rounded-carte bg-encre p-4 text-left text-blanc shadow-xl"
+        >
+          <span className="block text-xs font-medium uppercase tracking-wider text-or-clair">
+            🔔 Bientôt à vous
+          </span>
+          <span className="mt-1 block text-lg font-medium">{alerte.titre}</span>
+          <span className="block text-sm text-blanc/85">
+            {heureAffichee(alerte.debut, tz)}
+            {alerte.lieu && ` · 📍 ${alerte.lieu}`} · {dansCombien(new Date(alerte.debut).getTime() - maintenant)}
+          </span>
+          <span className="mt-2 block text-xs text-blanc/70">Toucher pour fermer</span>
+        </button>
+      )}
 
       {coordination && (
         <p className="mt-4 rounded-2xl bg-or/15 px-4 py-2.5 text-center text-sm text-or-fonce">
@@ -177,7 +206,8 @@ function Contenu({
         )}
       </section>
 
-      <div className="mt-4">
+      <div className="mt-4 flex flex-col gap-3">
+        <BlocAlertes jeton={jeton} delai={delai} onDelai={setDelai} />
         <GuideInstallation />
       </div>
 

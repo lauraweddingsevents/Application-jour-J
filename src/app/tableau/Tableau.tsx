@@ -10,6 +10,7 @@ import { Protege } from "@/components/Protege";
 import { FormulaireMariage } from "@/components/mariage/FormulaireMariage";
 import { creerMariage, listerMariages } from "@/lib/donnees";
 import { creerMariageDemo } from "@/lib/demo";
+import { CLE_PUBLIQUE_ALERTES } from "@/lib/alertes";
 import { dateLongue, joursAvant, libelleCompteARebours } from "@/lib/dates";
 import { messageErreur } from "@/lib/erreurs";
 import { nomMariage, type Mariage } from "@/lib/types";
@@ -93,6 +94,12 @@ function ListeMariages() {
           </Bouton>
         </Carte>
       )}
+
+      <p className="mt-6 text-center text-sm">
+        <Link href="/reglages/alertes" className="text-or-fonce underline underline-offset-4">
+          {CLE_PUBLIQUE_ALERTES ? "⚙️ Réglages des alertes" : "🔔 Activer les alertes sur téléphone (à faire une fois)"}
+        </Link>
+      </p>
 
       <Feuille titre="Nouveau mariage" ouverte={creation} onFermer={fermer}>
         <FormulaireMariage

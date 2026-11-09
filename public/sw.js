@@ -5,7 +5,7 @@
   sans réseau (lieux de réception à la campagne).
   Les données du déroulé elles-mêmes sont gardées par la page (mémoire du téléphone).
 */
-const VERSION = "macoordo-v3";
+const VERSION = "macoordo-v4";
 const PAGE_HORS_LIGNE = "/hors-ligne";
 // Au-delà de ce délai sur un réseau faible, on affiche la copie enregistrée
 const DELAI_RESEAU_MS = 4000;
@@ -113,5 +113,39 @@ self.addEventListener("message", (evenement) => {
           }),
       ),
     ),
+  );
+});
+
+// ---------------------------------------------------------------------
+// Alertes : affichage des notifications reçues
+// ---------------------------------------------------------------------
+self.addEventListener("push", (evenement) => {
+  let n = { titre: "Ma Coordo", texte: "", url: "/", etiquette: "ma-coordo" };
+  try {
+    n = { ...n, ...evenement.data.json() };
+  } catch {}
+  evenement.waitUntil(
+    self.registration.showNotification(n.titre, {
+      body: n.texte,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      tag: n.etiquette,
+      renotify: true,
+      vibrate: [200, 100, 200, 100, 200],
+      data: { url: n.url },
+    }),
+  );
+});
+
+// Toucher la notification ouvre (ou réaffiche) le déroulé
+self.addEventListener("notificationclick", (evenement) => {
+  evenement.notification.close();
+  const url = new URL((evenement.notification.data && evenement.notification.data.url) || "/", self.location.origin).href;
+  evenement.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((fenetres) => {
+      const ouverte = fenetres.find((f) => f.url.split("?")[0] === url);
+      if (ouverte) return ouverte.focus();
+      return self.clients.openWindow(url);
+    }),
   );
 });
