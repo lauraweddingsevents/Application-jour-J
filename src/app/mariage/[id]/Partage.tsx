@@ -60,7 +60,7 @@ export function Partage({ intervenant, mariage }: { intervenant: Intervenant; ma
         </Bouton>
       )}
       <a
-        href={lien}
+        href={`${lien}?apercu=1`}
         target="_blank"
         rel="noopener noreferrer"
         className="mt-1 text-center text-sm text-or-fonce underline underline-offset-4"

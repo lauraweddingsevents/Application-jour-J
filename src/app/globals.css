@@ -43,3 +43,14 @@ body {
   outline: 3px solid var(--color-or);
   outline-offset: 2px;
 }
+
+/* Impression : feuille A4 blanche, marges sobres */
+@page {
+  size: A4;
+  margin: 14mm 12mm;
+}
+@media print {
+  body {
+    background: #fff;
+  }
+}

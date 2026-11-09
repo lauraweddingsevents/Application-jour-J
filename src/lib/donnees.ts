@@ -230,3 +230,37 @@ export async function decalerMoments(momentId: string, minutes: number, suivants
     }),
   );
 }
+
+// ---------- Qui est prêt ? ----------
+export type Preparation = {
+  visites: Map<string, { premiere: string; derniere: string; nombre: number }>;
+  alertes: Map<string, number>; // intervenant -> délai choisi (min)
+};
+
+// Renvoie null si l'information n'est pas disponible (script 0003 pas encore installé)
+export async function lirePreparation(mariageId: string): Promise<Preparation | null> {
+  const supabase = supabaseNavigateur();
+  const [v, a] = await Promise.all([
+    supabase
+      .from("visites_liens")
+      .select("intervenant_id, premiere_visite, derniere_visite, nombre_visites, intervenants!inner(mariage_id)")
+      .eq("intervenants.mariage_id", mariageId),
+    supabase
+      .from("abonnements_push")
+      .select("intervenant_id, delai_minutes, intervenants!inner(mariage_id)")
+      .eq("intervenants.mariage_id", mariageId),
+  ]);
+  if (v.error) return null;
+  const visites = new Map(
+    (v.data ?? []).map((x) => [
+      x.intervenant_id as string,
+      { premiere: x.premiere_visite as string, derniere: x.derniere_visite as string, nombre: x.nombre_visites as number },
+    ]),
+  );
+  const alertes = new Map<string, number>();
+  for (const x of a.data ?? []) {
+    const id = x.intervenant_id as string;
+    alertes.set(id, Math.min(alertes.get(id) ?? Infinity, x.delai_minutes as number));
+  }
+  return { visites, alertes };
+}

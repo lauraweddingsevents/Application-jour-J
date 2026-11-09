@@ -21,6 +21,15 @@ export function VueIntervenant() {
   const { jeton } = useParams<{ jeton: string }>();
   const { etat, derniereMaj, effacerMaj, recharger } = useVue(jeton);
 
+  // Note que l'intervenant a ouvert son lien (sauf aperçu par l'organisatrice)
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("apercu")) return;
+    supabaseAnonyme().rpc("signaler_visite", { p_jeton: jeton }).then(
+      () => {},
+      () => {},
+    );
+  }, [jeton]);
+
   if (etat.statut === "chargement")
     return <p className="mt-20 text-center text-encre-doux">Chargement de votre déroulé…</p>;
   if (etat.statut === "introuvable" || etat.statut === "erreur")

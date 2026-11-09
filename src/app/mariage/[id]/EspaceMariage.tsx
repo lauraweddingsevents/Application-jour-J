@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { EnTete } from "@/components/EnTete";
 import { Protege } from "@/components/Protege";
@@ -77,6 +78,12 @@ function Contenu() {
         {mariage.lieu_principal && (
           <p className="text-encre-doux">{mariage.lieu_principal}</p>
         )}
+        <Link
+          href={`/mariage/${mariage.id}/imprimer`}
+          className="mt-3 inline-flex min-h-[40px] items-center gap-2 rounded-full bg-blanc px-4 text-sm text-or-fonce ring-1 ring-or-clair"
+        >
+          🖨 Version imprimable / PDF
+        </Link>
       </div>
 
       <nav
