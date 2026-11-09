@@ -2,7 +2,8 @@
 // Lecture et enregistrement des données de la créatrice.
 // La sécurité est assurée par la base : chacune ne voit que ses mariages.
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
-import type { Intervenant, Mariage, Moment } from "@/lib/types";
+import { decalerDeJours } from "@/lib/heures";
+import type { ElementFiche, Intervenant, Mariage, Moment } from "@/lib/types";
 
 const CHAMPS_MARIAGE =
   "id, nom_marie_1, nom_marie_2, date_mariage, lieu_principal, fuseau_horaire, delai_alerte_defaut, canal";
@@ -167,4 +168,51 @@ export async function modifierMoment(id: string, m: Partial<MomentSaisi>) {
 
 export async function supprimerMoment(id: string) {
   verifier(await supabaseNavigateur().from("moments").delete().eq("id", id));
+}
+
+// Décale tous les moments d'un mariage de N jours (quand on change la date)
+export async function decalerJoursMoments(mariageId: string, jours: number, fuseau: string) {
+  if (!jours) return;
+  const moments = await listerMoments(mariageId);
+  await Promise.all(
+    moments.map((m) =>
+      modifierMoment(m.id, {
+        debut: decalerDeJours(m.debut, jours, fuseau),
+        fin: m.fin ? decalerDeJours(m.fin, jours, fuseau) : null,
+      }),
+    ),
+  );
+}
+
+// ---------- Fiche pratique ----------
+const CHAMPS_FICHE = "id, mariage_id, categorie, titre, contenu, telephone, adresse, visibilite, ordre";
+
+export async function listerFiche(mariageId: string): Promise<ElementFiche[]> {
+  return verifier(
+    await supabaseNavigateur()
+      .from("fiche_elements")
+      .select(CHAMPS_FICHE)
+      .eq("mariage_id", mariageId)
+      .order("ordre")
+      .order("created_at"),
+  );
+}
+
+export type ElementFicheSaisi = Pick<
+  ElementFiche,
+  "categorie" | "titre" | "contenu" | "telephone" | "adresse" | "visibilite"
+>;
+
+export async function creerElementFiche(mariageId: string, e: ElementFicheSaisi, ordre: number) {
+  verifier(
+    await supabaseNavigateur().from("fiche_elements").insert({ ...e, mariage_id: mariageId, ordre }),
+  );
+}
+
+export async function modifierElementFiche(id: string, e: ElementFicheSaisi) {
+  verifier(await supabaseNavigateur().from("fiche_elements").update(e).eq("id", id));
+}
+
+export async function supprimerElementFiche(id: string) {
+  verifier(await supabaseNavigateur().from("fiche_elements").delete().eq("id", id));
 }

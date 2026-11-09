@@ -15,6 +15,9 @@ assert.equal(h.heureAffichee("2027-06-12T23:30:00.000Z", tz), "01h30");
 assert.equal(h.heureSaisie("2027-06-12T12:00:00.000Z", tz), "14:00");
 assert.equal(h.estApresMinuit("2027-06-12T23:30:00.000Z", "2027-06-12", tz), true);
 assert.equal(h.estApresMinuit("2027-06-12T21:30:00.000Z", "2027-06-12", tz), false);
+// Changement de date d'hiver à été : même heure locale
+assert.equal(h.decalerDeJours("2026-11-09T14:45:00.000Z", 215, tz), "2027-06-12T13:45:00.000Z");
+assert.equal(h.decalerDeJours("2027-06-12T23:30:00.000Z", -1, tz), "2027-06-11T23:30:00.000Z");
 assert.equal(h.dureeLisible(90), "1 h 30");
 assert.equal(h.dureeLisible(45), "45 min");
 assert.equal(h.dureeLisible(120), "2 h");

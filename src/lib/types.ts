@@ -46,3 +46,26 @@ export type Moment = {
 export function trierMoments<T extends Pick<Moment, "debut" | "ordre">>(liste: T[]) {
   return [...liste].sort((a, b) => a.debut.localeCompare(b.debut) || a.ordre - b.ordre);
 }
+
+export type CategorieFiche = "contact" | "adresse" | "meteo" | "note";
+export type Visibilite = "tous" | "prestataires";
+
+export type ElementFiche = {
+  id: string;
+  mariage_id: string;
+  categorie: CategorieFiche;
+  titre: string;
+  contenu: string | null;
+  telephone: string | null;
+  adresse: string | null;
+  visibilite: Visibilite;
+  ordre: number;
+};
+
+export function lienGoogleMaps(adresse: string) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adresse)}`;
+}
+
+export function lienTelephone(tel: string) {
+  return `tel:${tel.replace(/[^\d+]/g, "")}`;
+}

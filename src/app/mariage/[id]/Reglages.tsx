@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { Bouton } from "@/components/ui/Bouton";
 import { Carte } from "@/components/ui/Carte";
 import { FormulaireMariage } from "@/components/mariage/FormulaireMariage";
-import { modifierMariage, supprimerMariage } from "@/lib/donnees";
+import { decalerJoursMoments, modifierMariage, supprimerMariage } from "@/lib/donnees";
 import { messageErreur } from "@/lib/erreurs";
 import { nomMariage, type Mariage } from "@/lib/types";
 
@@ -27,6 +27,7 @@ export function Reglages({
         <FormulaireMariage
           key={mariage.id}
           texteBouton="Enregistrer les modifications"
+          aideDate="Si vous changez la date, tout le déroulé est déplacé au nouveau jour, aux mêmes horaires."
           initial={{
             nom_marie_1: mariage.nom_marie_1,
             nom_marie_2: mariage.nom_marie_2,
@@ -35,7 +36,13 @@ export function Reglages({
             delai_alerte_defaut: mariage.delai_alerte_defaut,
           }}
           onEnregistrer={async (saisie) => {
-            onModifie(await modifierMariage(mariage.id, saisie));
+            const ecartJours = Math.round(
+              (Date.parse(saisie.date_mariage) - Date.parse(mariage.date_mariage)) / 86_400_000,
+            );
+            const maj = await modifierMariage(mariage.id, saisie);
+            // Nouvelle date : tout le déroulé suit, aux mêmes horaires
+            await decalerJoursMoments(mariage.id, ecartJours, mariage.fuseau_horaire);
+            onModifie(maj);
             setEnregistre(true);
             setTimeout(() => setEnregistre(false), 3000);
           }}

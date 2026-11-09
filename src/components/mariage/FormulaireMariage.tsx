@@ -11,8 +11,10 @@ export const DELAIS_ALERTE = [5, 10, 15, 20, 30, 45, 60];
 export function FormulaireMariage({
   initial,
   texteBouton,
+  aideDate,
   onEnregistrer,
 }: {
+  aideDate?: string;
   initial?: MariageSaisi;
   texteBouton: string;
   onEnregistrer: (m: MariageSaisi) => Promise<void>;
@@ -79,6 +81,7 @@ export function FormulaireMariage({
         value={m.date_mariage}
         onChange={(e) => maj("date_mariage", e.target.value)}
         required
+        aide={aideDate}
       />
       <Champ
         id="lieu"

@@ -23,7 +23,7 @@ export function joursAvant(dateIso: string) {
 
 export function libelleCompteARebours(dateIso: string) {
   const n = joursAvant(dateIso);
-  if (n === 0) return "C'est aujourd'hui !";
+  if (n === 0) return "C'est aujourd'hui\u00a0!";
   if (n === 1) return "Demain";
   if (n > 1) return `Dans ${n} jours`;
   return "Passé";

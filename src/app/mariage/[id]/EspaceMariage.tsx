@@ -1,7 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { Carte } from "@/components/ui/Carte";
 import { EnTete } from "@/components/EnTete";
 import { Protege } from "@/components/Protege";
 import { lireMariage } from "@/lib/donnees";
@@ -9,6 +8,7 @@ import { dateLongue, libelleCompteARebours } from "@/lib/dates";
 import { estIdentifiantInvalide, messageErreur } from "@/lib/erreurs";
 import { nomMariage, type Mariage } from "@/lib/types";
 import { Deroule } from "./Deroule";
+import { Fiche } from "./Fiche";
 import { Intervenants } from "./Intervenants";
 import { Reglages } from "./Reglages";
 
@@ -103,19 +103,8 @@ function Contenu() {
         {onglet === "intervenants" && <Intervenants mariage={mariage} />}
         {onglet === "reglages" && <Reglages mariage={mariage} onModifie={setMariage} />}
         {onglet === "deroule" && <Deroule mariage={mariage} />}
-        {onglet === "fiche" && (
-          <BientotDisponible texte="La fiche pratique (contacts, adresses, plan B météo) arrive très bientôt." />
-        )}
+        {onglet === "fiche" && <Fiche mariage={mariage} />}
       </div>
     </main>
-  );
-}
-
-function BientotDisponible({ texte }: { texte: string }) {
-  return (
-    <Carte className="text-center">
-      <p className="text-3xl" aria-hidden>🕊️</p>
-      <p className="mt-2 text-encre-doux">{texte}</p>
-    </Carte>
   );
 }

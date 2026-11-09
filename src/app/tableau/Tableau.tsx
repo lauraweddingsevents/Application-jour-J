@@ -9,6 +9,7 @@ import { EnTete } from "@/components/EnTete";
 import { Protege } from "@/components/Protege";
 import { FormulaireMariage } from "@/components/mariage/FormulaireMariage";
 import { creerMariage, listerMariages } from "@/lib/donnees";
+import { creerMariageDemo } from "@/lib/demo";
 import { dateLongue, joursAvant, libelleCompteARebours } from "@/lib/dates";
 import { messageErreur } from "@/lib/erreurs";
 import { nomMariage, type Mariage } from "@/lib/types";
@@ -26,6 +27,19 @@ function ListeMariages() {
   const [mariages, setMariages] = useState<Mariage[] | null>(null);
   const [erreur, setErreur] = useState("");
   const [creation, setCreation] = useState(false);
+  const [demoEnCours, setDemoEnCours] = useState(false);
+
+  async function lancerDemo() {
+    setErreur("");
+    setDemoEnCours(true);
+    try {
+      const id = await creerMariageDemo();
+      router.push(`/mariage/${id}`);
+    } catch (e) {
+      setErreur(messageErreur(e as Error));
+      setDemoEnCours(false);
+    }
+  }
   const fermer = useCallback(() => setCreation(false), []);
 
   useEffect(() => {
@@ -66,6 +80,19 @@ function ListeMariages() {
 
       {aVenir.length > 0 && <ListeCartes titre="À venir" mariages={aVenir} />}
       {passes.length > 0 && <ListeCartes titre="Passés" mariages={passes} discret />}
+
+      {mariages && (
+        <Carte className="mt-10 flex flex-col gap-3 bg-creme-fonce/40 text-center">
+          <p className="text-sm text-encre-doux">
+            Envie d&apos;essayer sans rien saisir ? Créez un mariage de
+            démonstration complet, daté d&apos;aujourd&apos;hui : déroulé de
+            14 h à 2 h, onze intervenants et fiche pratique.
+          </p>
+          <Bouton variante="secondaire" onClick={lancerDemo} disabled={demoEnCours}>
+            {demoEnCours ? "Création en cours…" : "✨ Créer un mariage de démonstration"}
+          </Bouton>
+        </Carte>
+      )}
 
       <Feuille titre="Nouveau mariage" ouverte={creation} onFermer={fermer}>
         <FormulaireMariage
