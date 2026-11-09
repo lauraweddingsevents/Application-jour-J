@@ -10,6 +10,7 @@ export function Confirmation() {
   const router = useRouter();
   const params = useSearchParams();
   const [erreur, setErreur] = useState("");
+  const [detail, setDetail] = useState("");
   const dejaFait = useRef(false);
 
   useEffect(() => {
@@ -24,18 +25,34 @@ export function Confirmation() {
 
     async function confirmer() {
       if (erreurLien) return setErreur(messageErreur({ message: erreurLien }));
-      // Lien « universel » : fonctionne même si l'e-mail est ouvert sur un autre appareil
+
+      // 1. La bibliothèque Supabase traite déjà toute seule un lien « ?code=… » :
+      //    on attend simplement qu'elle ait fini, puis on regarde si on est connecté.
+      const { data } = await supabase.auth.getSession();
+      if (data.session) return router.replace("/tableau");
+
+      // 2. Lien « universel » (?token_hash=…) : fonctionne même si l'e-mail
+      //    est ouvert sur un autre appareil que celui de la demande.
       if (tokenHash) {
         const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
-        if (error) return setErreur(messageErreur(error));
-      } else if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (error) return setErreur(messageErreur(error));
-      } else {
-        return setErreur("Ce lien de connexion est incomplet.");
+        if (error) return afficher(error);
+        return router.replace("/tableau");
       }
-      router.replace("/tableau");
+
+      if (code) {
+        // Le lien a été ouvert dans un autre navigateur que celui de la demande
+        return setErreur(
+          "Ce lien doit être ouvert sur le même appareil et dans le même navigateur que celui où vous avez demandé la connexion. Demandez un nouveau lien depuis cet appareil.",
+        );
+      }
+      setErreur("Ce lien de connexion est incomplet.");
     }
+
+    function afficher(error: { message?: string; code?: string }) {
+      setErreur(messageErreur(error));
+      setDetail(error.code ?? error.message ?? "");
+    }
+
     confirmer();
   }, [params, router]);
 
@@ -44,6 +61,7 @@ export function Confirmation() {
   return (
     <div className="mt-8 flex flex-col items-center gap-6">
       <p className="text-alerte">{erreur}</p>
+      {detail && <p className="text-xs text-encre-doux">Détail technique : {detail}</p>}
       <BoutonLien href="/connexion">Recevoir un nouveau lien</BoutonLien>
     </div>
   );
