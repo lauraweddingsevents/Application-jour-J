@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bouton } from "@/components/ui/Bouton";
 import { Carte } from "@/components/ui/Carte";
 import { EnTete } from "@/components/EnTete";
@@ -39,8 +39,27 @@ export function ConfigurationAlertes() {
   );
 }
 
+// Les clés fabriquées sont gardées sur cet appareil le temps de la
+// configuration (le téléphone recharge parfois la page quand on change
+// d'onglet), puis effacées avec le bouton « J'ai terminé ».
+const CLE_MEMOIRE = "macoordo:cles-alertes-en-cours";
+
 function Contenu() {
-  const [cles, setCles] = useState<Cles | null>(null);
+  const [cles, setClesEtat] = useState<Cles | null>(null);
+  useEffect(() => {
+    try {
+      const enCours = localStorage.getItem(CLE_MEMOIRE);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (enCours) setClesEtat(JSON.parse(enCours));
+    } catch {}
+  }, []);
+  function setCles(c: Cles | null) {
+    try {
+      if (c) localStorage.setItem(CLE_MEMOIRE, JSON.stringify(c));
+      else localStorage.removeItem(CLE_MEMOIRE);
+    } catch {}
+    setClesEtat(c);
+  }
   const deja = Boolean(CLE_PUBLIQUE_ALERTES);
   const adresse = typeof window !== "undefined" ? `${window.location.origin}/api/alertes` : "";
 
@@ -99,9 +118,13 @@ on conflict (cle) do update set valeur = excluded.valeur;`
             <Valeur nom="Texte SQL" valeur={sql} secret />
           </Carte>
           <p className="text-sm text-encre-doux">
-            🔒 Ces valeurs ne sont enregistrées nulle part ailleurs : gardez cette
-            page ouverte jusqu&apos;à la fin, et ne les envoyez à personne.
+            🔒 Ces valeurs restent les mêmes même si vous changez d&apos;onglet.
+            Ne les envoyez à personne. Une fois les étapes 1 et 2 terminées,
+            effacez-les de cet appareil :
           </p>
+          <Bouton variante="secondaire" onClick={() => setCles(null)}>
+            ✓ J&apos;ai terminé : effacer les clés de cet appareil
+          </Bouton>
         </div>
       )}
     </main>
