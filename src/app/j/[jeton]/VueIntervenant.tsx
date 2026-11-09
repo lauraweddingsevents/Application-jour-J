@@ -7,6 +7,7 @@ import { Feuille } from "@/components/ui/Feuille";
 import { FormulaireRetard } from "@/components/retard/FormulaireRetard";
 import { supabaseAnonyme } from "@/lib/supabase/anonyme";
 import { Logo } from "@/components/Logo";
+import { GuideInstallation } from "@/components/GuideInstallation";
 import { dateLongue } from "@/lib/dates";
 import { dureeLisible, estApresMinuit, heureAffichee } from "@/lib/heures";
 import { nomMariage } from "@/lib/types";
@@ -96,7 +97,7 @@ function Contenu({
       {horsLigne && (
         <div className="mb-4 rounded-2xl bg-encre px-4 py-3 text-sm text-blanc" role="status">
           📡 Pas de réseau : voici la dernière version enregistrée (mise à jour à{" "}
-          {new Date(chargeLe).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}).
+          {new Date(chargeLe).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }).replace(":", "h")}).
           Elle se mettra à jour toute seule au retour du réseau.
         </div>
       )}
@@ -175,6 +176,10 @@ function Contenu({
           </Carte>
         )}
       </section>
+
+      <div className="mt-4">
+        <GuideInstallation />
+      </div>
 
       <nav className="sticky top-0 z-10 -mx-4 mt-6 bg-creme/95 px-4 py-2 backdrop-blur" aria-label="Affichage">
         <div className="grid grid-cols-3 gap-1 rounded-full bg-creme-fonce p-1">

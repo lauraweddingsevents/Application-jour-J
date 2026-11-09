@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import { EnregistrementHorsLigne } from "@/components/EnregistrementHorsLigne";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
   description:
     "Le déroulé du jour J partagé en temps réel avec vos prestataires et vos proches.",
   applicationName: "Ma Coordo",
+  manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     title: "Ma Coordo",
@@ -41,7 +43,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fr" className={`${poppins.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <EnregistrementHorsLigne />
+      </body>
     </html>
   );
 }
