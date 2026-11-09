@@ -12,13 +12,16 @@ import {
 import { messageErreur } from "@/lib/erreurs";
 import type { Intervenant, Mariage } from "@/lib/types";
 import { FormulaireIntervenant } from "./FormulaireIntervenant";
+import { Partage } from "./Partage";
 
 export function Intervenants({ mariage }: { mariage: Mariage }) {
   const [liste, setListe] = useState<Intervenant[] | null>(null);
   const [erreur, setErreur] = useState("");
   // null = fermé, "nouveau" = création, sinon l'intervenant à modifier
   const [edition, setEdition] = useState<Intervenant | "nouveau" | null>(null);
+  const [partage, setPartage] = useState<Intervenant | null>(null);
   const fermer = useCallback(() => setEdition(null), []);
+  const fermerPartage = useCallback(() => setPartage(null), []);
 
   const charger = useCallback(() => {
     listerIntervenants(mariage.id)
@@ -50,11 +53,15 @@ export function Intervenants({ mariage }: { mariage: Mariage }) {
       )}
 
       {prestataires.length > 0 && (
-        <Groupe titre={`Prestataires (${prestataires.length})`} liste={prestataires} onChoisir={setEdition} />
+        <Groupe titre={`Prestataires (${prestataires.length})`} liste={prestataires} onChoisir={setEdition} onPartager={setPartage} />
       )}
       {proches.length > 0 && (
-        <Groupe titre={`Proches (${proches.length})`} liste={proches} onChoisir={setEdition} />
+        <Groupe titre={`Proches (${proches.length})`} liste={proches} onChoisir={setEdition} onPartager={setPartage} />
       )}
+
+      <Feuille titre="Envoyer son lien" ouverte={partage !== null} onFermer={fermerPartage}>
+        {partage && <Partage intervenant={partage} mariage={mariage} />}
+      </Feuille>
 
       <Feuille
         titre={edition === "nouveau" ? "Nouvel intervenant" : "Modifier l'intervenant"}
@@ -102,10 +109,12 @@ function Groupe({
   titre,
   liste,
   onChoisir,
+  onPartager,
 }: {
   titre: string;
   liste: Intervenant[];
   onChoisir: (i: Intervenant) => void;
+  onPartager: (i: Intervenant) => void;
 }) {
   return (
     <section className="mt-6">
@@ -113,8 +122,13 @@ function Groupe({
       <ul className="flex flex-col gap-2">
         {liste.map((i) => (
           <li key={i.id}>
-            <button type="button" onClick={() => onChoisir(i)} className="w-full text-left">
-              <Carte className="flex items-center gap-4 py-4">
+            <Carte className="flex items-center gap-3 py-3">
+              <button
+                type="button"
+                onClick={() => onChoisir(i)}
+                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                aria-label={`Modifier ${i.nom}`}
+              >
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-creme font-medium text-or-fonce">
                   {i.nom.trim().charAt(0).toUpperCase()}
                 </span>
@@ -122,17 +136,18 @@ function Groupe({
                   <span className="block truncate font-medium">{i.nom}</span>
                   <span className="block truncate text-sm text-encre-doux">
                     {i.role || "Rôle non précisé"}
-                    {i.telephone && " · 📞"}
+                    {i.acces_coordination && " · Coordination"}
                   </span>
                 </span>
-                {i.acces_coordination && (
-                  <span className="shrink-0 rounded-full bg-or/15 px-2.5 py-1 text-xs font-medium text-or-fonce">
-                    Coordination
-                  </span>
-                )}
-                <span aria-hidden className="text-encre-doux">›</span>
-              </Carte>
-            </button>
+              </button>
+              <button
+                type="button"
+                onClick={() => onPartager(i)}
+                className="min-h-[44px] shrink-0 rounded-full bg-or px-4 text-sm font-medium text-blanc"
+              >
+                Lien ↗
+              </button>
+            </Carte>
           </li>
         ))}
       </ul>
