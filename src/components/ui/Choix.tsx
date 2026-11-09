@@ -21,7 +21,7 @@ export function Choix<T extends string>({
             type="button"
             aria-pressed={valeur === o.valeur}
             onClick={() => onChange(o.valeur)}
-            className={`min-h-[44px] rounded-full px-3 text-sm font-medium transition-colors ${
+            className={`min-h-[44px] whitespace-nowrap rounded-full px-2 text-sm font-medium transition-colors ${
               valeur === o.valeur ? "bg-blanc text-encre shadow-sm" : "text-encre-doux"
             }`}
           >

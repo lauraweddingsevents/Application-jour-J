@@ -29,3 +29,20 @@ export type Intervenant = {
 export function nomMariage(m: Pick<Mariage, "nom_marie_1" | "nom_marie_2">) {
   return `${m.nom_marie_1} & ${m.nom_marie_2}`;
 }
+
+export type Moment = {
+  id: string;
+  mariage_id: string;
+  titre: string;
+  debut: string; // instant ISO
+  fin: string | null;
+  lieu: string | null;
+  notes: string | null;
+  ordre: number;
+  intervenants: string[]; // identifiants des intervenants assignés
+};
+
+// Trie les moments dans l'ordre de la journée
+export function trierMoments<T extends Pick<Moment, "debut" | "ordre">>(liste: T[]) {
+  return [...liste].sort((a, b) => a.debut.localeCompare(b.debut) || a.ordre - b.ordre);
+}

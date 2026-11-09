@@ -8,6 +8,7 @@ import { lireMariage } from "@/lib/donnees";
 import { dateLongue, libelleCompteARebours } from "@/lib/dates";
 import { estIdentifiantInvalide, messageErreur } from "@/lib/erreurs";
 import { nomMariage, type Mariage } from "@/lib/types";
+import { Deroule } from "./Deroule";
 import { Intervenants } from "./Intervenants";
 import { Reglages } from "./Reglages";
 
@@ -101,9 +102,7 @@ function Contenu() {
       <div className="mt-4">
         {onglet === "intervenants" && <Intervenants mariage={mariage} />}
         {onglet === "reglages" && <Reglages mariage={mariage} onModifie={setMariage} />}
-        {onglet === "deroule" && (
-          <BientotDisponible texte="Le déroulé (moments, horaires, lieux) arrive à la prochaine étape." />
-        )}
+        {onglet === "deroule" && <Deroule mariage={mariage} />}
         {onglet === "fiche" && (
           <BientotDisponible texte="La fiche pratique (contacts, adresses, plan B météo) arrive très bientôt." />
         )}
