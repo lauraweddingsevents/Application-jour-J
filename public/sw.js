@@ -5,7 +5,7 @@
   sans réseau (lieux de réception à la campagne).
   Les données du déroulé elles-mêmes sont gardées par la page (mémoire du téléphone).
 */
-const VERSION = "macoordo-v1";
+const VERSION = "macoordo-v2";
 const PAGE_HORS_LIGNE = "/hors-ligne";
 // Au-delà de ce délai sur un réseau faible, on affiche la copie enregistrée
 const DELAI_RESEAU_MS = 4000;
@@ -75,4 +75,25 @@ self.addEventListener("fetch", (evenement) => {
   } else if (requete.mode === "navigate") {
     evenement.respondWith(reseauDabord(requete));
   }
+});
+
+// La page demande de copier tout de suite ses fichiers (et elle-même)
+self.addEventListener("message", (evenement) => {
+  const donnees = evenement.data || {};
+  if (donnees.type !== "copier" || !Array.isArray(donnees.urls)) return;
+  evenement.waitUntil(
+    caches.open(VERSION).then((cache) =>
+      Promise.allSettled(
+        donnees.urls
+          .filter((u) => typeof u === "string" && new URL(u).origin === self.location.origin)
+          .map(async (u) => {
+            const url = new URL(u);
+            // Les fichiers fixes déjà copiés ne sont pas retéléchargés
+            if (estFichierFixe(url) && (await cache.match(u))) return;
+            const reponse = await fetch(u, { credentials: "same-origin" });
+            if (reponse.ok) await cache.put(u, reponse);
+          }),
+      ),
+    ),
+  );
 });
