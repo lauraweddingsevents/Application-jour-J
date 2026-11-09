@@ -293,6 +293,12 @@ function Contenu({
         Ce lien est personnel : merci de ne pas le partager.
         <br />
         Mis à jour en temps réel · Ma Coordo
+        <br />
+        <a href="/aide" className="underline underline-offset-4">Aide</a>
+        {" · "}
+        <a href="/mentions-legales" className="underline underline-offset-4">
+          Confidentialité
+        </a>
       </p>
     </main>
   );

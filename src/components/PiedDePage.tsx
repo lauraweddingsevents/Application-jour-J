@@ -8,6 +8,10 @@ export function PiedDePage() {
         <span className="text-or-fonce">Laura Weddings &amp; Events</span>
       </p>
       <p className="mt-2">
+        <Link href="/aide" className="underline underline-offset-4">
+          Aide
+        </Link>
+        {" · "}
         <Link href="/mentions-legales" className="underline underline-offset-4">
           Mentions légales et confidentialité
         </Link>
