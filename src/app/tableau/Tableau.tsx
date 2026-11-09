@@ -1,50 +1,124 @@
 "use client";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Bouton } from "@/components/ui/Bouton";
 import { Carte } from "@/components/ui/Carte";
-import { Logo } from "@/components/Logo";
-import { supabaseNavigateur } from "@/lib/supabase/navigateur";
-import { useSession } from "@/lib/useSession";
+import { Feuille } from "@/components/ui/Feuille";
+import { EnTete } from "@/components/EnTete";
+import { Protege } from "@/components/Protege";
+import { FormulaireMariage } from "@/components/mariage/FormulaireMariage";
+import { creerMariage, listerMariages } from "@/lib/donnees";
+import { dateLongue, joursAvant, libelleCompteARebours } from "@/lib/dates";
+import { messageErreur } from "@/lib/erreurs";
+import { nomMariage, type Mariage } from "@/lib/types";
 
 export function Tableau() {
+  return (
+    <Protege>
+      <ListeMariages />
+    </Protege>
+  );
+}
+
+function ListeMariages() {
   const router = useRouter();
-  const session = useSession();
+  const [mariages, setMariages] = useState<Mariage[] | null>(null);
+  const [erreur, setErreur] = useState("");
+  const [creation, setCreation] = useState(false);
+  const fermer = useCallback(() => setCreation(false), []);
 
-  // Pas connectée ? Retour à la page de connexion.
   useEffect(() => {
-    if (session === null) router.replace("/connexion");
-  }, [session, router]);
+    listerMariages()
+      .then(setMariages)
+      .catch((e) => setErreur(messageErreur(e)));
+  }, []);
 
-  if (!session) {
-    return <p className="mt-20 text-center text-encre-doux">Chargement…</p>;
-  }
-
-  async function seDeconnecter() {
-    await supabaseNavigateur().auth.signOut();
-    router.replace("/");
-  }
+  const aVenir = (mariages ?? []).filter((m) => joursAvant(m.date_mariage) >= 0);
+  const passes = (mariages ?? []).filter((m) => joursAvant(m.date_mariage) < 0).reverse();
 
   return (
-    <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8">
-      <header className="flex items-center justify-between">
-        <Logo />
-        <Bouton variante="discret" onClick={seDeconnecter} className="px-2">
-          Se déconnecter
-        </Bouton>
-      </header>
+    <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6">
+      <EnTete />
 
-      <h1 className="mt-10 text-2xl font-medium">Bonjour 👋</h1>
-      <p className="mt-1 text-encre-doux">
-        Compte : <strong>{session.user.email}</strong>
-      </p>
+      <div className="mt-8 flex items-end justify-between gap-4">
+        <h1 className="text-2xl font-medium">Mes mariages</h1>
+      </div>
 
-      <Carte className="mt-8 text-center">
-        <h2 className="font-medium">Vos mariages apparaîtront ici</h2>
-        <p className="mt-2 text-sm text-encre-doux">
-          La création des mariages arrive à la prochaine étape.
-        </p>
-      </Carte>
+      <Bouton className="mt-6 w-full" onClick={() => setCreation(true)}>
+        <span aria-hidden className="text-xl leading-none">+</span> Nouveau mariage
+      </Bouton>
+
+      {erreur && <p className="mt-6 text-alerte">{erreur}</p>}
+      {mariages === null && !erreur && (
+        <p className="mt-10 text-center text-encre-doux">Chargement…</p>
+      )}
+
+      {mariages?.length === 0 && (
+        <Carte className="mt-6 text-center">
+          <p className="text-3xl" aria-hidden>💍</p>
+          <h2 className="mt-2 font-medium">Aucun mariage pour l&apos;instant</h2>
+          <p className="mt-1 text-sm text-encre-doux">
+            Créez votre premier mariage pour commencer le déroulé.
+          </p>
+        </Carte>
+      )}
+
+      {aVenir.length > 0 && <ListeCartes titre="À venir" mariages={aVenir} />}
+      {passes.length > 0 && <ListeCartes titre="Passés" mariages={passes} discret />}
+
+      <Feuille titre="Nouveau mariage" ouverte={creation} onFermer={fermer}>
+        <FormulaireMariage
+          texteBouton="Créer le mariage"
+          onEnregistrer={async (saisie) => {
+            const m = await creerMariage(saisie);
+            setCreation(false);
+            router.push(`/mariage/${m.id}?onglet=intervenants`);
+          }}
+        />
+      </Feuille>
     </main>
+  );
+}
+
+function ListeCartes({
+  titre,
+  mariages,
+  discret,
+}: {
+  titre: string;
+  mariages: Mariage[];
+  discret?: boolean;
+}) {
+  return (
+    <section className="mt-8">
+      <h2 className="mb-3 text-sm font-medium uppercase tracking-wider text-encre-doux">
+        {titre}
+      </h2>
+      <ul className="flex flex-col gap-3">
+        {mariages.map((m) => (
+          <li key={m.id}>
+            <Link href={`/mariage/${m.id}`} className="block">
+              <Carte className={`transition-shadow hover:shadow-md ${discret ? "opacity-70" : ""}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-lg font-medium">{nomMariage(m)}</p>
+                    <p className="mt-0.5 text-sm text-encre-doux first-letter:uppercase">
+                      {dateLongue(m.date_mariage)}
+                    </p>
+                    {m.lieu_principal && (
+                      <p className="mt-0.5 text-sm text-encre-doux">{m.lieu_principal}</p>
+                    )}
+                  </div>
+                  <span className="shrink-0 rounded-full bg-creme px-3 py-1 text-xs font-medium text-or-fonce">
+                    {libelleCompteARebours(m.date_mariage)}
+                  </span>
+                </div>
+              </Carte>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
