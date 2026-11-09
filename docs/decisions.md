@@ -45,3 +45,13 @@ Choix validés avec Laura, à respecter dans la suite du développement.
 - Les liens personnels passent par la fonction `vue_intervenant` (jamais d'accès direct
   aux tables, jamais de téléphone ni d'e-mail d'intervenant).
 - Temps réel : chaque modification envoie un signal sur un canal secret propre au mariage.
+
+## Alertes (étape 11)
+- Alerte dans la page : bandeau + vibration quand le lien est ouvert.
+- Notifications (web push) : chaque minute, Supabase (pg_cron + pg_net) appelle
+  `/api/alertes`, protégé par `ALERTES_SECRET`.
+- Réglages Vercel nécessaires : `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (Configuration),
+  `VAPID_PRIVATE_KEY` et `ALERTES_SECRET` (Secret). Après toute modification,
+  une nouvelle mise en ligne est nécessaire.
+- Supabase : table `reglages_prives` (secret et adresse de l'application).
+- Les clés sont fabriquées sur la page « Configurer les alertes », dans le navigateur.
