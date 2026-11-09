@@ -3,16 +3,21 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
+import { effacerMemoire } from "@/lib/memoire";
+import { BandeauHorsLigne } from "@/components/BandeauHorsLigne";
 
 export function EnTete({ retour }: { retour?: { href: string; texte: string } }) {
   const router = useRouter();
 
   async function seDeconnecter() {
     await supabaseNavigateur().auth.signOut();
+    effacerMemoire();
     router.replace("/");
   }
 
   return (
+    <>
+    <BandeauHorsLigne />
     <header className="flex min-h-[52px] items-center justify-between gap-2">
       {retour ? (
         <Link
@@ -34,5 +39,6 @@ export function EnTete({ retour }: { retour?: { href: string; texte: string } })
         Se déconnecter
       </button>
     </header>
+    </>
   );
 }

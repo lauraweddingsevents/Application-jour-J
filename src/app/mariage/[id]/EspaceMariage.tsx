@@ -1,6 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { EnTete } from "@/components/EnTete";
 import { Protege } from "@/components/Protege";
 import { lireMariage } from "@/lib/donnees";
@@ -30,18 +30,21 @@ export function EspaceMariage() {
 
 function Contenu() {
   const { id } = useParams<{ id: string }>();
-  const params = useSearchParams();
-  const router = useRouter();
   const [mariage, setMariage] = useState<Mariage | null | undefined>(undefined);
   const [erreur, setErreur] = useState("");
+  // L'onglet est lu dans l'adresse par le téléphone lui-même (pas par le serveur),
+  // pour que la page fonctionne aussi sans réseau.
+  const [onglet, setOnglet] = useState<Onglet>("deroule");
+  useEffect(() => {
+    const demande = new URLSearchParams(window.location.search).get("onglet");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (ONGLETS.some((o) => o.id === demande)) setOnglet(demande as Onglet);
+  }, []);
 
-  const ongletDemande = params.get("onglet") as Onglet | null;
-  const onglet: Onglet = ONGLETS.some((o) => o.id === ongletDemande)
-    ? (ongletDemande as Onglet)
-    : "deroule";
-
-  const changerOnglet = (o: Onglet) =>
-    router.replace(`/mariage/${id}?onglet=${o}`, { scroll: false });
+  const changerOnglet = (o: Onglet) => {
+    setOnglet(o);
+    window.history.replaceState(null, "", `/mariage/${id}?onglet=${o}`);
+  };
 
   const charger = useCallback(() => {
     lireMariage(id)

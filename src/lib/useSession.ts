@@ -9,11 +9,22 @@ export function useSession() {
 
   useEffect(() => {
     const supabase = supabaseNavigateur();
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    let fini = false;
+    supabase.auth.getSession().then(({ data }) => {
+      fini = true;
+      setSession(data.session);
+    });
+    // Sans réseau, le renouvellement de la connexion peut bloquer : on n'attend pas
+    const garde = setTimeout(() => {
+      if (!fini && !navigator.onLine) setSession(null);
+    }, 2500);
     const { data } = supabase.auth.onAuthStateChange((_evenement, s) =>
       setSession(s),
     );
-    return () => data.subscription.unsubscribe();
+    return () => {
+      clearTimeout(garde);
+      data.subscription.unsubscribe();
+    };
   }, []);
 
   return session;

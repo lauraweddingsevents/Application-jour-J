@@ -3,6 +3,7 @@
 // La sécurité est assurée par la base : chacune ne voit que ses mariages.
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { decalerDeJours } from "@/lib/heures";
+import { avecMemoire } from "@/lib/memoire";
 import type { ElementFiche, Intervenant, Mariage, Moment } from "@/lib/types";
 
 const CHAMPS_MARIAGE =
@@ -17,22 +18,22 @@ function verifier<T>(res: { data: T | null; error: unknown }): T {
 
 // ---------- Mariages ----------
 export async function listerMariages(): Promise<Mariage[]> {
-  return verifier(
+  return avecMemoire("mariages", async () => verifier(
     await supabaseNavigateur()
       .from("mariages")
       .select(CHAMPS_MARIAGE)
       .order("date_mariage", { ascending: true }),
-  );
+  ));
 }
 
 export async function lireMariage(id: string): Promise<Mariage | null> {
-  return verifier(
+  return avecMemoire(`mariage:${id}`, async () => verifier(
     await supabaseNavigateur()
       .from("mariages")
       .select(CHAMPS_MARIAGE)
       .eq("id", id)
       .maybeSingle(),
-  );
+  ));
 }
 
 export type MariageSaisi = Pick<
@@ -63,14 +64,14 @@ export async function supprimerMariage(id: string) {
 
 // ---------- Intervenants ----------
 export async function listerIntervenants(mariageId: string): Promise<Intervenant[]> {
-  return verifier(
+  return avecMemoire(`intervenants:${mariageId}`, async () => verifier(
     await supabaseNavigateur()
       .from("intervenants")
       .select(CHAMPS_INTERVENANT)
       .eq("mariage_id", mariageId)
       .order("ordre")
       .order("nom"),
-  );
+  ));
 }
 
 export type IntervenantSaisi = Pick<
@@ -121,6 +122,7 @@ function versMoment({ moment_intervenants, ...m }: MomentBrut): Moment {
 }
 
 export async function listerMoments(mariageId: string): Promise<Moment[]> {
+  return avecMemoire(`moments:${mariageId}`, async () => {
   const brut = verifier<MomentBrut[]>(
     await supabaseNavigateur()
       .from("moments")
@@ -130,6 +132,7 @@ export async function listerMoments(mariageId: string): Promise<Moment[]> {
       .order("ordre"),
   );
   return brut.map(versMoment);
+  });
 }
 
 export type MomentSaisi = Pick<Moment, "titre" | "debut" | "fin" | "lieu" | "notes" | "intervenants">;
@@ -188,14 +191,14 @@ export async function decalerJoursMoments(mariageId: string, jours: number, fuse
 const CHAMPS_FICHE = "id, mariage_id, categorie, titre, contenu, telephone, adresse, visibilite, ordre";
 
 export async function listerFiche(mariageId: string): Promise<ElementFiche[]> {
-  return verifier(
+  return avecMemoire(`fiche:${mariageId}`, async () => verifier(
     await supabaseNavigateur()
       .from("fiche_elements")
       .select(CHAMPS_FICHE)
       .eq("mariage_id", mariageId)
       .order("ordre")
       .order("created_at"),
-  );
+  ));
 }
 
 export type ElementFicheSaisi = Pick<

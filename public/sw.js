@@ -5,7 +5,7 @@
   sans réseau (lieux de réception à la campagne).
   Les données du déroulé elles-mêmes sont gardées par la page (mémoire du téléphone).
 */
-const VERSION = "macoordo-v2";
+const VERSION = "macoordo-v3";
 const PAGE_HORS_LIGNE = "/hors-ligne";
 // Au-delà de ce délai sur un réseau faible, on affiche la copie enregistrée
 const DELAI_RESEAU_MS = 4000;
@@ -63,12 +63,30 @@ async function reseauDabord(requete) {
   }
 }
 
+async function donneesInternes(requete) {
+  const cache = await caches.open(VERSION);
+  try {
+    const reponse = await fetch(requete);
+    if (reponse.ok) cache.put(requete, reponse.clone());
+    return reponse;
+  } catch {
+    const copie = await cache.match(requete);
+    if (copie) return copie;
+    throw new Error("hors ligne");
+  }
+}
+
 self.addEventListener("fetch", (evenement) => {
   const requete = evenement.request;
   if (requete.method !== "GET") return;
   const url = new URL(requete.url);
   if (url.origin !== self.location.origin) return; // Supabase, Google Fonts… : pas touché
-  if (requete.headers.get("RSC")) return; // navigation interne de l'application
+  if (requete.headers.get("RSC")) {
+    // Données internes de l'application (seconde partie d'une page, navigation) :
+    // d'abord le réseau, sinon la copie enregistrée
+    evenement.respondWith(donneesInternes(requete));
+    return;
+  }
 
   if (estFichierFixe(url)) {
     evenement.respondWith(copieDabord(requete));
