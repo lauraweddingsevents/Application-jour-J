@@ -13,6 +13,7 @@ export type MomentVue = {
   lieu: string | null;
   notes: string | null;
   ordre: number;
+  raccourci?: boolean;
   intervenants: string[];
 };
 
@@ -39,6 +40,7 @@ export type Vue = {
     adresse: string | null;
     visibilite: Visibilite;
   }[];
+  annonces?: { id: string; texte: string; auteur: string | null; le: string }[];
 };
 
 type Memoire = { vue: Vue; chargeLe: number };
@@ -176,4 +178,46 @@ export function finEffective(m: MomentVue, tous: MomentVue[]) {
   const debut = new Date(m.debut).getTime();
   const suivant = tous.map((x) => new Date(x.debut).getTime()).filter((t) => t > debut).sort((a, b) => a - b)[0];
   return suivant ?? debut + 30 * 60_000;
+}
+
+// Annonces pas encore vues sur ce téléphone (seulement celles des 2 dernières heures)
+export function useAnnoncesNonLues(jeton: string, annonces: NonNullable<Vue["annonces"]>, maintenant: number) {
+  const cleVues = `macoordo:annonces-vues:${jeton}`;
+  const [vues, setVues] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    try {
+      // Lecture de la mémoire du téléphone : possible seulement une fois la page affichée
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setVues(JSON.parse(localStorage.getItem(cleVues) ?? "[]"));
+    } catch {
+      setVues([]);
+    }
+  }, [cleVues]);
+
+  const limite = maintenant - 2 * 3_600_000;
+  const nouvelle =
+    vues === null
+      ? undefined
+      : annonces.find((a) => !vues.includes(a.id) && new Date(a.le).getTime() > limite);
+
+  // Vibration à l'arrivée d'une nouvelle annonce
+  const derniere = useRef<string | null>(null);
+  useEffect(() => {
+    if (nouvelle && derniere.current !== nouvelle.id) {
+      derniere.current = nouvelle.id;
+      navigator.vibrate?.([200, 100, 200]);
+    }
+  }, [nouvelle]);
+
+  return {
+    nouvelle,
+    vue: () => {
+      const toutes = [...new Set([...(vues ?? []), ...annonces.map((a) => a.id)])].slice(-50);
+      setVues(toutes);
+      try {
+        localStorage.setItem(cleVues, JSON.stringify(toutes));
+      } catch {}
+    },
+  };
 }

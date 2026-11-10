@@ -39,8 +39,16 @@ export type Moment = {
   lieu: string | null;
   notes: string | null;
   ordre: number;
+  raccourci: boolean; // temps fort affiché en raccourci
   intervenants: string[]; // identifiants des intervenants assignés
 };
+
+// Temps forts proposés en raccourci par défaut
+export function estTempsFort(titre: string) {
+  return /^(cérémonie|vin d.honneur|cocktail|dîner|repas|soirée dansante|ouverture de bal)/i.test(titre.trim());
+}
+
+export type Annonce = { id: string; texte: string; auteur: string | null; le: string };
 
 // Trie les moments dans l'ordre de la journée
 export function trierMoments<T extends Pick<Moment, "debut" | "ordre">>(liste: T[]) {

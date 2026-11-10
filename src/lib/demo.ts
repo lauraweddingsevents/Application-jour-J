@@ -4,7 +4,7 @@
 // Les numéros de téléphone sont fictifs.
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { versInstant, ajouterMinutes } from "@/lib/heures";
-import type { Categorie, CategorieFiche, Visibilite } from "@/lib/types";
+import { estTempsFort, type Categorie, type CategorieFiche, type Visibilite } from "@/lib/types";
 
 const FUSEAU = "Europe/Paris";
 
@@ -132,6 +132,7 @@ export async function creerMariageDemo(date = aujourdhuiParis()): Promise<string
             fin: ajouterMinutes(debut, m.duree),
             lieu: m.lieu ?? null,
             notes: m.notes ?? null,
+            raccourci: estTempsFort(m.titre),
             ordre,
           };
         }),

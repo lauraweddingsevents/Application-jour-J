@@ -8,7 +8,7 @@ import { ZoneTexte } from "@/components/ui/ZoneTexte";
 import { messageErreur } from "@/lib/erreurs";
 import { ajouterMinutes, dureeLisible, heureSaisie, minutesEntre, versInstant } from "@/lib/heures";
 import type { MomentSaisi } from "@/lib/donnees";
-import type { Intervenant, Mariage, Moment } from "@/lib/types";
+import { estTempsFort, type Intervenant, type Mariage, type Moment } from "@/lib/types";
 
 const TITRES_SUGGERES = [
   "Préparatifs de la mariée",
@@ -68,6 +68,9 @@ export function FormulaireMoment({
   const [lieu, setLieu] = useState(initial?.lieu ?? "");
   const [notes, setNotes] = useState(initial?.notes ?? "");
   const [assignes, setAssignes] = useState<string[]>(initial?.intervenants ?? []);
+  // Raccourci : coché d'office pour les temps forts, tant qu'on n'y a pas touché
+  const [raccourci, setRaccourci] = useState(initial?.raccourci ?? false);
+  const [raccourciChoisi, setRaccourciChoisi] = useState(Boolean(initial));
   const [enCours, setEnCours] = useState(false);
   const [confirmer, setConfirmer] = useState(false);
   const [erreur, setErreur] = useState("");
@@ -113,6 +116,7 @@ export function FormulaireMoment({
             fin: calculerFin(debut),
             lieu: lieu.trim() || null,
             notes: notes.trim() || null,
+            raccourci,
             intervenants: assignes,
           }),
         );
@@ -124,7 +128,10 @@ export function FormulaireMoment({
         placeholder="Cérémonie laïque"
         list="titres-suggeres"
         value={titre}
-        onChange={(e) => setTitre(e.target.value)}
+        onChange={(e) => {
+          setTitre(e.target.value);
+          if (!raccourciChoisi) setRaccourci(estTempsFort(e.target.value));
+        }}
         required
         autoComplete="off"
       />
@@ -228,6 +235,24 @@ export function FormulaireMoment({
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
       />
+
+      <label className="flex cursor-pointer items-start gap-3 rounded-2xl bg-blanc p-4 ring-1 ring-or-clair/60">
+        <input
+          type="checkbox"
+          checked={raccourci}
+          onChange={(e) => {
+            setRaccourciChoisi(true);
+            setRaccourci(e.target.checked);
+          }}
+          className="mt-1 h-5 w-5 shrink-0 accent-[#A07E5E]"
+        />
+        <span>
+          <span className="block font-medium">Temps fort (raccourci)</span>
+          <span className="block text-sm text-encre-doux">
+            Un bouton en haut du déroulé permet d&apos;y aller directement.
+          </span>
+        </span>
+      </label>
 
       {erreur && <p className="text-sm text-alerte">{erreur}</p>}
       <Bouton type="submit" disabled={enCours}>

@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { EnTete } from "@/components/EnTete";
 import { Protege } from "@/components/Protege";
-import { lireMariage } from "@/lib/donnees";
+import { creerAnnonce, lireMariage, listerAnnonces } from "@/lib/donnees";
+import { Feuille } from "@/components/ui/Feuille";
+import { FormulaireAnnonce } from "@/components/annonces/FormulaireAnnonce";
+import { useEnLigne } from "@/lib/useEnLigne";
+import type { Annonce } from "@/lib/types";
 import { dateLongue, libelleCompteARebours } from "@/lib/dates";
 import { estIdentifiantInvalide, messageErreur } from "@/lib/erreurs";
 import { nomMariage, type Mariage } from "@/lib/types";
@@ -42,6 +46,15 @@ function Contenu() {
     if (ONGLETS.some((o) => o.id === demande)) setOnglet(demande as Onglet);
   }, []);
 
+  const enLigne = useEnLigne();
+  const [feuilleAnnonce, setFeuilleAnnonce] = useState(false);
+  const [annonces, setAnnonces] = useState<Annonce[]>([]);
+  const fermerAnnonce = useCallback(() => setFeuilleAnnonce(false), []);
+  function ouvrirAnnonce() {
+    setFeuilleAnnonce(true);
+    listerAnnonces(id).then(setAnnonces);
+  }
+
   const changerOnglet = (o: Onglet) => {
     setOnglet(o);
     window.history.replaceState(null, "", `/mariage/${id}?onglet=${o}`);
@@ -78,12 +91,22 @@ function Contenu() {
         {mariage.lieu_principal && (
           <p className="text-encre-doux">{mariage.lieu_principal}</p>
         )}
-        <Link
-          href={`/mariage/${mariage.id}/imprimer`}
-          className="mt-3 inline-flex min-h-[40px] items-center gap-2 rounded-full bg-blanc px-4 text-sm text-or-fonce ring-1 ring-or-clair"
-        >
-          🖨 Version imprimable / PDF
-        </Link>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={ouvrirAnnonce}
+            disabled={!enLigne}
+            className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-or px-4 text-sm font-medium text-blanc disabled:opacity-50"
+          >
+            📣 Annoncer
+          </button>
+          <Link
+            href={`/mariage/${mariage.id}/imprimer`}
+            className="inline-flex min-h-[40px] items-center gap-2 rounded-full bg-blanc px-4 text-sm text-or-fonce ring-1 ring-or-clair"
+          >
+            🖨 Imprimable / PDF
+          </Link>
+        </div>
       </div>
 
       <nav
@@ -108,6 +131,16 @@ function Contenu() {
           ))}
         </div>
       </nav>
+
+      <Feuille titre="Faire une annonce" ouverte={feuilleAnnonce} onFermer={fermerAnnonce}>
+        <FormulaireAnnonce
+          recentes={annonces}
+          onEnvoyer={async (texte) => {
+            await creerAnnonce(mariage.id, texte);
+            setAnnonces(await listerAnnonces(mariage.id));
+          }}
+        />
+      </Feuille>
 
       <div className="mt-4">
         {onglet === "intervenants" && <Intervenants mariage={mariage} />}

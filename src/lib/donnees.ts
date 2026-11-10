@@ -4,7 +4,7 @@
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { decalerDeJours } from "@/lib/heures";
 import { avecMemoire } from "@/lib/memoire";
-import type { ElementFiche, Intervenant, Mariage, Moment } from "@/lib/types";
+import type { Annonce, ElementFiche, Intervenant, Mariage, Moment } from "@/lib/types";
 
 const CHAMPS_MARIAGE =
   "id, nom_marie_1, nom_marie_2, date_mariage, lieu_principal, fuseau_horaire, delai_alerte_defaut, canal";
@@ -115,7 +115,7 @@ type MomentBrut = Omit<Moment, "intervenants"> & {
 };
 
 const CHAMPS_MOMENT =
-  "id, mariage_id, titre, debut, fin, lieu, notes, ordre, moment_intervenants(intervenant_id)";
+  "id, mariage_id, titre, debut, fin, lieu, notes, ordre, raccourci, moment_intervenants(intervenant_id)";
 
 function versMoment({ moment_intervenants, ...m }: MomentBrut): Moment {
   return { ...m, intervenants: moment_intervenants.map((x) => x.intervenant_id) };
@@ -135,7 +135,7 @@ export async function listerMoments(mariageId: string): Promise<Moment[]> {
   });
 }
 
-export type MomentSaisi = Pick<Moment, "titre" | "debut" | "fin" | "lieu" | "notes" | "intervenants">;
+export type MomentSaisi = Pick<Moment, "titre" | "debut" | "fin" | "lieu" | "notes" | "raccourci" | "intervenants">;
 
 async function enregistrerAssignations(momentId: string, intervenants: string[]) {
   const supabase = supabaseNavigateur();
@@ -263,4 +263,32 @@ export async function lirePreparation(mariageId: string): Promise<Preparation | 
     alertes.set(id, Math.min(alertes.get(id) ?? Infinity, x.delai_minutes as number));
   }
   return { visites, alertes };
+}
+
+// ---------- Annonces ----------
+export async function listerAnnonces(mariageId: string): Promise<Annonce[]> {
+  const res = await supabaseNavigateur()
+    .from("annonces")
+    .select("id, texte, auteur, created_at")
+    .eq("mariage_id", mariageId)
+    .order("created_at", { ascending: false })
+    .limit(5);
+  if (res.error) return [];
+  return (res.data ?? []).map((a) => ({ id: a.id, texte: a.texte, auteur: a.auteur, le: a.created_at }));
+}
+
+export async function creerAnnonce(mariageId: string, texte: string) {
+  const a = verifier<{ id: string }>(
+    await supabaseNavigateur()
+      .from("annonces")
+      .insert({ mariage_id: mariageId, texte: texte.trim().slice(0, 140), auteur: null })
+      .select("id")
+      .single(),
+  );
+  // Notifications envoyées tout de suite (sinon, au plus tard dans la minute)
+  fetch("/api/alertes/annonce", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: a.id }),
+  }).catch(() => {});
 }

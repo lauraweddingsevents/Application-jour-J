@@ -5,6 +5,8 @@ import { AffichageFiche } from "@/components/fiche/AffichageFiche";
 import { Carte } from "@/components/ui/Carte";
 import { Feuille } from "@/components/ui/Feuille";
 import { FormulaireRetard } from "@/components/retard/FormulaireRetard";
+import { FormulaireAnnonce } from "@/components/annonces/FormulaireAnnonce";
+import { Raccourcis, allerAuMoment } from "@/components/Raccourcis";
 import { supabaseAnonyme } from "@/lib/supabase/anonyme";
 import { Logo } from "@/components/Logo";
 import { GuideInstallation } from "@/components/GuideInstallation";
@@ -13,7 +15,7 @@ import { lireDelai, useAlertesDansLaPage } from "@/lib/alertes";
 import { dateLongue } from "@/lib/dates";
 import { dureeLisible, estApresMinuit, heureAffichee } from "@/lib/heures";
 import { nomMariage } from "@/lib/types";
-import { finEffective, useMaintenant, useVue, type MomentVue, type Vue } from "@/lib/vue";
+import { finEffective, useAnnoncesNonLues, useMaintenant, useVue, type MomentVue, type Vue } from "@/lib/vue";
 
 type Onglet = "miens" | "tout" | "infos";
 
@@ -78,13 +80,27 @@ function Contenu({
   recharger: () => Promise<void>;
 }) {
   const [onglet, setOnglet] = useState<Onglet>("miens");
+  const maintenant = useMaintenant();
   const [retard, setRetard] = useState<MomentVue | null>(null);
   const [annonce, setAnnonce] = useState("");
   const fermerRetard = useCallback(() => setRetard(null), []);
+  const [feuilleAnnonce, setFeuilleAnnonce] = useState(false);
+  const fermerFeuilleAnnonce = useCallback(() => setFeuilleAnnonce(false), []);
+  const annonces = useMemo(() => vue.annonces ?? [], [vue.annonces]);
+  const { nouvelle: annonceRecue, vue: marquerAnnoncesVues } = useAnnoncesNonLues(jeton, annonces, maintenant);
+
+  // Raccourci : va au moment, en passant sur « Tout le déroulé » s'il n'est pas dans « Mes moments »
+  function aller(id: string) {
+    if (onglet === "miens" && !vue.moments.find((m) => m.id === id)?.intervenants.includes(vue.moi.id)) {
+      setOnglet("tout");
+      setTimeout(() => allerAuMoment(id), 80);
+    } else {
+      allerAuMoment(id);
+    }
+  }
   // Les personnes avec l'accès coordination peuvent signaler un retard
   const coordination = vue.moi.acces_coordination;
   const surRetard = coordination && !horsLigne ? setRetard : undefined;
-  const maintenant = useMaintenant();
   const tz = vue.mariage.fuseau_horaire;
 
   const moments = useMemo(
@@ -134,29 +150,55 @@ function Contenu({
         </p>
       </header>
 
-      {alerte && (
-        <button
-          type="button"
-          onClick={fermerAlerte}
-          role="alert"
-          className="fixed inset-x-3 top-3 z-50 rounded-carte bg-encre p-4 text-left text-blanc shadow-xl"
-        >
-          <span className="block text-xs font-medium uppercase tracking-wider text-or-clair">
-            🔔 Bientôt à vous
-          </span>
-          <span className="mt-1 block text-lg font-medium">{alerte.titre}</span>
-          <span className="block text-sm text-blanc/85">
-            {heureAffichee(alerte.debut, tz)}
-            {alerte.lieu && ` · 📍 ${alerte.lieu}`} · {dansCombien(new Date(alerte.debut).getTime() - maintenant)}
-          </span>
-          <span className="mt-2 block text-xs text-blanc/70">Toucher pour fermer</span>
-        </button>
+      {(alerte || annonceRecue) && (
+        <div className="fixed inset-x-3 top-3 z-50 flex flex-col gap-2">
+          {annonceRecue && (
+            <button
+              type="button"
+              onClick={marquerAnnoncesVues}
+              role="alert"
+              className="rounded-carte bg-or p-4 text-left text-blanc shadow-xl"
+            >
+              <span className="block text-xs font-medium uppercase tracking-wider text-blanc/80">
+                📣 Annonce{annonceRecue.auteur ? ` de ${annonceRecue.auteur}` : ""}
+              </span>
+              <span className="mt-1 block text-lg font-medium">{annonceRecue.texte}</span>
+              <span className="mt-2 block text-xs text-blanc/75">Toucher pour fermer</span>
+            </button>
+          )}
+          {alerte && (
+            <button
+              type="button"
+              onClick={fermerAlerte}
+              role="alert"
+              className="rounded-carte bg-encre p-4 text-left text-blanc shadow-xl"
+            >
+              <span className="block text-xs font-medium uppercase tracking-wider text-or-clair">
+                🔔 Bientôt à vous
+              </span>
+              <span className="mt-1 block text-lg font-medium">{alerte.titre}</span>
+              <span className="block text-sm text-blanc/85">
+                {heureAffichee(alerte.debut, tz)}
+                {alerte.lieu && ` · 📍 ${alerte.lieu}`} · {dansCombien(new Date(alerte.debut).getTime() - maintenant)}
+              </span>
+              <span className="mt-2 block text-xs text-blanc/70">Toucher pour fermer</span>
+            </button>
+          )}
+        </div>
       )}
 
       {coordination && (
-        <p className="mt-4 rounded-2xl bg-or/15 px-4 py-2.5 text-center text-sm text-or-fonce">
-          🎯 Vous avez l&apos;accès coordination : touchez « ⏱ Retard » sur un moment pour décaler les horaires.
-        </p>
+        <div className="mt-4 flex items-center gap-3 rounded-2xl bg-or/15 px-4 py-2.5 text-sm text-or-fonce">
+          <p className="flex-1">🎯 Accès coordination : « ⏱ Retard » sur un moment, ou une annonce à tous.</p>
+          <button
+            type="button"
+            onClick={() => setFeuilleAnnonce(true)}
+            disabled={horsLigne}
+            className="min-h-[44px] shrink-0 rounded-full bg-or px-4 font-medium text-blanc disabled:opacity-50"
+          >
+            📣 Annoncer
+          </button>
+        </div>
       )}
       {annonce && (
         <p className="mt-4 rounded-2xl bg-succes/15 px-4 py-3 text-sm text-succes" role="status">
@@ -242,6 +284,9 @@ function Contenu({
             </button>
           ))}
         </div>
+        {onglet !== "infos" && (
+          <Raccourcis moments={moments} tz={tz} maintenant={maintenant} onAller={aller} />
+        )}
       </nav>
 
       <div className="mt-4">
@@ -271,6 +316,28 @@ function Contenu({
           </Carte>
         )}
       </div>
+
+      {coordination && (
+        <Feuille titre="Faire une annonce" ouverte={feuilleAnnonce} onFermer={fermerFeuilleAnnonce}>
+          <FormulaireAnnonce
+            recentes={annonces}
+            onEnvoyer={async (texte) => {
+              const { data, error } = await supabaseAnonyme().rpc("creer_annonce_jeton", {
+                p_jeton: jeton,
+                p_texte: texte,
+              });
+              if (error) throw error;
+              fetch("/api/alertes/annonce", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: data }),
+              }).catch(() => {});
+              await recharger();
+              marquerAnnoncesVues(); // l'auteur n'a pas besoin du bandeau
+            }}
+          />
+        </Feuille>
+      )}
 
       {coordination && (
         <Feuille titre="Signaler un retard" ouverte={retard !== null} onFermer={fermerRetard}>
@@ -414,7 +481,7 @@ function ListeMoments({
         const nuitAvant = i > 0 && estApresMinuit(moments[i - 1].debut, dateMariage, tz);
         const autres = m.intervenants.filter((id) => id !== moiId).map((id) => noms.get(id)).filter(Boolean);
         return (
-          <li key={m.id}>
+          <li key={m.id} id={`moment-${m.id}`} className="scroll-mt-36 rounded-carte">
             {nuit && !nuitAvant && (
               <p className="my-2 flex items-center gap-3 text-xs font-medium uppercase tracking-wider text-encre-doux">
                 <span className="h-px flex-1 bg-or-clair" /> 🌙 Après minuit <span className="h-px flex-1 bg-or-clair" />

@@ -52,3 +52,36 @@ export function heureLocale(instant: string, fuseau: string) {
     .format(new Date(instant))
     .replace(":", "h");
 }
+
+type LigneAnnonce = {
+  annonce_id: string;
+  texte: string;
+  auteur: string | null;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+  jeton: string;
+};
+
+// Envoie les notifications des annonces pas encore parties (une précise, ou toutes)
+export async function envoyerAnnonces(id: string | null) {
+  const supabase = supabaseServeurAnonyme();
+  const { data, error } = await supabase.rpc("prendre_annonces", { p_secret: SECRET_ALERTES, p_id: id });
+  if (error) return { erreur: error.message, envoyees: 0 };
+  const lignes = (data ?? []) as LigneAnnonce[];
+  const resultats = await Promise.all(
+    lignes.map(async (l) => {
+      const statut = await envoyer(l, {
+        titre: `📣 ${l.texte}`,
+        texte: l.auteur ? `Annonce de ${l.auteur}` : "Annonce de l'organisation",
+        url: `/j/${l.jeton}`,
+        etiquette: `annonce-${l.annonce_id}`,
+      });
+      if (statut === "expire") {
+        await supabase.rpc("oublier_abonnement", { p_secret: SECRET_ALERTES, p_endpoint: l.endpoint });
+      }
+      return statut;
+    }),
+  );
+  return { envoyees: resultats.filter((r) => r === "ok").length };
+}

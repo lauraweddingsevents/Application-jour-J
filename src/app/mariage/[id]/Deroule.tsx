@@ -4,6 +4,8 @@ import { Bouton } from "@/components/ui/Bouton";
 import { Carte } from "@/components/ui/Carte";
 import { Feuille } from "@/components/ui/Feuille";
 import { FormulaireRetard } from "@/components/retard/FormulaireRetard";
+import { Raccourcis, allerAuMoment } from "@/components/Raccourcis";
+import { useMaintenant } from "@/lib/vue";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import {
   creerMoment,
@@ -31,6 +33,7 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
   const [annonce, setAnnonce] = useState("");
   const fermer = useCallback(() => setEdition(null), []);
   const fermerRetard = useCallback(() => setRetard(null), []);
+  const maintenant = useMaintenant();
 
   const charger = useCallback(
     () =>
@@ -119,6 +122,12 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
         </p>
       )}
 
+      {moments && !reorganiser && (
+        <div className="sticky top-[60px] z-[5] -mx-4 bg-creme/95 px-4 pb-2 backdrop-blur">
+          <Raccourcis moments={moments} tz={tz} maintenant={maintenant} onAller={allerAuMoment} />
+        </div>
+      )}
+
       {annonce && (
         <p className="mt-4 rounded-2xl bg-succes/15 px-4 py-3 text-sm text-succes" role="status">
           {annonce}
@@ -146,7 +155,7 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
                   <span className="h-px flex-1 bg-or-clair" /> 🌙 Après minuit <span className="h-px flex-1 bg-or-clair" />
                 </li>
               )}
-              <li className="flex items-stretch gap-2">
+              <li id={`moment-${m.id}`} className="flex scroll-mt-36 items-stretch gap-2 rounded-carte">
                 <button
                   type="button"
                   className="min-w-0 flex-1 text-left disabled:cursor-default"

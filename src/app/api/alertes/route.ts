@@ -3,6 +3,7 @@ import {
   SECRET_ALERTES,
   alertesConfigurees,
   envoyer,
+  envoyerAnnonces,
   heureLocale,
   supabaseServeurAnonyme,
 } from "@/lib/push-serveur";
@@ -52,7 +53,11 @@ export async function POST(requete: Request) {
     }),
   );
 
+  // Filet de sécurité : annonces dont l'envoi immédiat n'a pas eu lieu
+  const annonces = await envoyerAnnonces(null);
+
   return NextResponse.json({
+    annonces: annonces.envoyees,
     envoyees: resultats.filter((r) => r === "ok").length,
     expirees: resultats.filter((r) => r === "expire").length,
     erreurs: resultats.filter((r) => r === "erreur").length,

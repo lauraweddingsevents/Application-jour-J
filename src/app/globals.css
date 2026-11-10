@@ -54,3 +54,9 @@ body {
     background: #fff;
   }
 }
+
+/* Moment atteint par un raccourci : brève mise en valeur */
+.mis-en-valeur > * {
+  box-shadow: 0 0 0 3px var(--color-or);
+  transition: box-shadow 0.3s;
+}
