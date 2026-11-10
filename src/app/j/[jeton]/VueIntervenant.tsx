@@ -155,12 +155,12 @@ function Contenu({
           {annonceRecue && (
             <button
               type="button"
-              onClick={marquerAnnoncesVues}
+              onClick={() => marquerAnnoncesVues()}
               role="alert"
               className="rounded-carte bg-or p-4 text-left text-blanc shadow-xl"
             >
               <span className="block text-xs font-medium uppercase tracking-wider text-blanc/80">
-                📣 Annonce{annonceRecue.auteur ? ` de ${annonceRecue.auteur}` : ""}
+                📣 Annonce {annonceRecue.auteur ? `de ${annonceRecue.auteur}` : "de l'organisation"}
               </span>
               <span className="mt-1 block text-lg font-medium">{annonceRecue.texte}</span>
               <span className="mt-2 block text-xs text-blanc/75">Toucher pour fermer</span>
@@ -327,13 +327,13 @@ function Contenu({
                 p_texte: texte,
               });
               if (error) throw error;
+              marquerAnnoncesVues([data as string]); // l'auteur n'a pas besoin du bandeau
               fetch("/api/alertes/annonce", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id: data }),
               }).catch(() => {});
               await recharger();
-              marquerAnnoncesVues(); // l'auteur n'a pas besoin du bandeau
             }}
           />
         </Feuille>

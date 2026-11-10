@@ -212,8 +212,9 @@ export function useAnnoncesNonLues(jeton: string, annonces: NonNullable<Vue["ann
 
   return {
     nouvelle,
-    vue: () => {
-      const toutes = [...new Set([...(vues ?? []), ...annonces.map((a) => a.id)])].slice(-50);
+    // Marque comme vues toutes les annonces connues (+ celles passées en paramètre)
+    vue: (enPlus: string[] = []) => {
+      const toutes = [...new Set([...(vues ?? []), ...annonces.map((a) => a.id), ...enPlus])].slice(-50);
       setVues(toutes);
       try {
         localStorage.setItem(cleVues, JSON.stringify(toutes));

@@ -25,6 +25,7 @@ export function FormulaireAnnonce({
   onEnvoyer: (texte: string) => Promise<void>;
 }) {
   const [libre, setLibre] = useState("");
+  const [choisie, setChoisie] = useState<string | null>(null);
   const [enCours, setEnCours] = useState<string | null>(null);
   const [envoyee, setEnvoyee] = useState("");
   const [erreur, setErreur] = useState("");
@@ -38,6 +39,7 @@ export function FormulaireAnnonce({
       await onEnvoyer(texte.trim());
       setEnvoyee(texte.trim());
       setLibre("");
+      setChoisie(null);
     } catch (e) {
       setErreur(messageErreur(e as Error));
     } finally {
@@ -48,8 +50,8 @@ export function FormulaireAnnonce({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-encre-doux">
-        Un toucher suffit : tous les intervenants reçoivent l&apos;annonce sur leur
-        lien et en notification.
+        Choisissez un message, puis confirmez : tous les intervenants le reçoivent
+        sur leur lien et en notification.
       </p>
       <div className="grid grid-cols-2 gap-2">
         {ANNONCES_PRETES.map((t) => (
@@ -57,13 +59,24 @@ export function FormulaireAnnonce({
             key={t}
             type="button"
             disabled={enCours !== null}
-            onClick={() => envoyer(t)}
-            className="min-h-[60px] rounded-2xl bg-blanc px-3 text-left text-sm font-medium leading-snug ring-1 ring-or-clair active:bg-or active:text-blanc disabled:opacity-50"
+            aria-pressed={choisie === t}
+            onClick={() => {
+              setEnvoyee("");
+              setChoisie(choisie === t ? null : t);
+            }}
+            className={`min-h-[60px] rounded-2xl px-3 text-left text-sm font-medium leading-snug disabled:opacity-50 ${
+              choisie === t ? "bg-or text-blanc" : "bg-blanc ring-1 ring-or-clair"
+            }`}
           >
-            {enCours === t ? "Envoi…" : t}
+            {t}
           </button>
         ))}
       </div>
+      {choisie && (
+        <Bouton onClick={() => envoyer(choisie)} disabled={enCours !== null}>
+          {enCours ? "Envoi…" : `📣 Envoyer « ${choisie} »`}
+        </Bouton>
+      )}
       <form
         className="flex gap-2"
         onSubmit={(e) => {
