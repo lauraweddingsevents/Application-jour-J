@@ -412,7 +412,8 @@ function dansCombien(ms: number) {
   const min = Math.round(ms / 60_000);
   if (min <= 0) return "maintenant";
   if (min < 60) return `dans ${min} min`;
-  return `dans ${dureeLisible(min)}`;
+  if (min < 48 * 60) return `dans ${dureeLisible(min)}`;
+  return `dans ${Math.round(min / 1440)} jours`;
 }
 
 function EnAvant({
