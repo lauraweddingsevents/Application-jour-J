@@ -4,7 +4,7 @@
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { decalerDeJours } from "@/lib/heures";
 import { avecMemoire } from "@/lib/memoire";
-import type { Annonce, ElementFiche, Intervenant, Mariage, Moment } from "@/lib/types";
+import type { Annonce, ElementFiche, Intervenant, Journee, Mariage, Moment } from "@/lib/types";
 
 const CHAMPS_MARIAGE =
   "id, nom_marie_1, nom_marie_2, date_mariage, lieu_principal, fuseau_horaire, delai_alerte_defaut, canal";
@@ -115,7 +115,7 @@ type MomentBrut = Omit<Moment, "intervenants"> & {
 };
 
 const CHAMPS_MOMENT =
-  "id, mariage_id, titre, debut, fin, lieu, notes, ordre, raccourci, moment_intervenants(intervenant_id)";
+  "id, mariage_id, titre, debut, fin, lieu, notes, ordre, raccourci, journee_id, moment_intervenants(intervenant_id)";
 
 function versMoment({ moment_intervenants, ...m }: MomentBrut): Moment {
   return { ...m, intervenants: moment_intervenants.map((x) => x.intervenant_id) };
@@ -135,7 +135,7 @@ export async function listerMoments(mariageId: string): Promise<Moment[]> {
   });
 }
 
-export type MomentSaisi = Pick<Moment, "titre" | "debut" | "fin" | "lieu" | "notes" | "raccourci" | "intervenants">;
+export type MomentSaisi = Pick<Moment, "titre" | "debut" | "fin" | "lieu" | "notes" | "raccourci" | "journee_id" | "intervenants">;
 
 async function enregistrerAssignations(momentId: string, intervenants: string[]) {
   const supabase = supabaseNavigateur();
@@ -176,6 +176,16 @@ export async function supprimerMoment(id: string) {
 // Décale tous les moments d'un mariage de N jours (quand on change la date)
 export async function decalerJoursMoments(mariageId: string, jours: number, fuseau: string) {
   if (!jours) return;
+  const supabase = supabaseNavigateur();
+  // Les jours ajoutés (veille, lendemain…) suivent aussi, dans un ordre qui évite
+  // que deux jours tombent un instant à la même date
+  const journees = await listerJournees(mariageId);
+  const ordre = [...journees].sort((a, b) => (jours > 0 ? -1 : 1) * a.date_jour.localeCompare(b.date_jour));
+  for (const j of ordre) {
+    const d = new Date(`${j.date_jour}T12:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + jours);
+    verifier(await supabase.from("journees").update({ date_jour: d.toISOString().slice(0, 10) }).eq("id", j.id));
+  }
   const moments = await listerMoments(mariageId);
   await Promise.all(
     moments.map((m) =>
@@ -185,6 +195,38 @@ export async function decalerJoursMoments(mariageId: string, jours: number, fuse
       }),
     ),
   );
+}
+
+// ---------- Jours du mariage (veille, lendemain…) ----------
+export async function listerJournees(mariageId: string): Promise<Journee[]> {
+  return avecMemoire(`journees:${mariageId}`, async () => {
+    const res = await supabaseNavigateur()
+      .from("journees")
+      .select("id, date_jour, titre")
+      .eq("mariage_id", mariageId)
+      .order("date_jour");
+    // Script 0005 pas encore installé : un seul jour
+    if (res.error && /journees/.test(res.error.message)) return [];
+    return verifier(res);
+  });
+}
+
+export async function creerJournee(mariageId: string, dateJour: string, titre: string | null) {
+  return verifier<Journee>(
+    await supabaseNavigateur()
+      .from("journees")
+      .insert({ mariage_id: mariageId, date_jour: dateJour, titre })
+      .select("id, date_jour, titre")
+      .single(),
+  );
+}
+
+export async function modifierJournee(id: string, dateJour: string, titre: string | null) {
+  verifier(await supabaseNavigateur().from("journees").update({ date_jour: dateJour, titre }).eq("id", id));
+}
+
+export async function supprimerJournee(id: string) {
+  verifier(await supabaseNavigateur().from("journees").delete().eq("id", id));
 }
 
 // ---------- Fiche pratique ----------

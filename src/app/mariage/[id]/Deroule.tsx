@@ -7,9 +7,13 @@ import { FormulaireRetard } from "@/components/retard/FormulaireRetard";
 import { Raccourcis, allerAuMoment } from "@/components/Raccourcis";
 import { useMaintenant } from "@/lib/vue";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
+import { SelecteurJours } from "@/components/SelecteurJours";
+import { JOUR_J, aujourdhuiDans, cleDuJour, jourParDefaut, listeDesJours } from "@/lib/jours";
+import { GestionJours } from "./GestionJours";
 import {
   creerMoment,
   decalerMoments,
+  listerJournees,
   listerIntervenants,
   listerMoments,
   modifierMoment,
@@ -18,12 +22,15 @@ import {
 import { messageErreur } from "@/lib/erreurs";
 import { dureeLisible, estApresMinuit, heureAffichee, heureSaisie, minutesEntre } from "@/lib/heures";
 import { echangerMoments } from "@/lib/reorganiser";
-import { trierMoments, type Intervenant, type Mariage, type Moment } from "@/lib/types";
+import { trierMoments, type Intervenant, type Journee, type Mariage, type Moment } from "@/lib/types";
 import { FormulaireMoment } from "./FormulaireMoment";
 
 export function Deroule({ mariage }: { mariage: Mariage }) {
   const tz = mariage.fuseau_horaire;
-  const [moments, setMoments] = useState<Moment[] | null>(null);
+  const [tous, setTous] = useState<Moment[] | null>(null);
+  const [journees, setJournees] = useState<Journee[]>([]);
+  const [jourChoisi, setJourChoisi] = useState<string | null>(null);
+  const [gestionJours, setGestionJours] = useState(false);
   const [intervenants, setIntervenants] = useState<Intervenant[]>([]);
   const [erreur, setErreur] = useState("");
   const [edition, setEdition] = useState<Moment | "nouveau" | null>(null);
@@ -37,10 +44,11 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
 
   const charger = useCallback(
     () =>
-      Promise.all([listerMoments(mariage.id), listerIntervenants(mariage.id)])
-        .then(([m, i]) => {
-          setMoments(trierMoments(m));
+      Promise.all([listerMoments(mariage.id), listerIntervenants(mariage.id), listerJournees(mariage.id)])
+        .then(([m, i, j]) => {
+          setTous(trierMoments(m));
           setIntervenants(i);
+          setJournees(j);
         })
         .catch((e) => setErreur(messageErreur(e))),
     [mariage.id],
@@ -66,13 +74,20 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
     };
   }, [mariage.canal, charger]);
 
+  // Plusieurs jours : on n'affiche que les moments du jour choisi
+  const jours = useMemo(() => listeDesJours(mariage.date_mariage, journees), [mariage.date_mariage, journees]);
+  const cleJour = jours.some((j) => j.cle === jourChoisi) ? jourChoisi! : jourParDefaut(jours, tz, maintenant);
+  const jour = jours.find((j) => j.cle === cleJour) ?? jours.find((j) => j.cle === JOUR_J)!;
+  const moments = useMemo(() => tous?.filter((m) => cleDuJour(m.journee_id) === cleJour) ?? null, [tous, cleJour]);
+  const fermerGestionJours = useCallback(() => setGestionJours(false), []);
+
   const parId = useMemo(() => new Map(intervenants.map((i) => [i.id, i])), [intervenants]);
   const lieuxConnus = useMemo(() => {
     const l = new Set<string>();
     if (mariage.lieu_principal) l.add(mariage.lieu_principal);
-    moments?.forEach((m) => m.lieu && l.add(m.lieu));
+    tous?.forEach((m) => m.lieu && l.add(m.lieu));
     return [...l];
-  }, [moments, mariage.lieu_principal]);
+  }, [tous, mariage.lieu_principal]);
 
   // Heure proposée pour un nouveau moment : la fin du dernier moment
   const dernier = moments?.at(-1);
@@ -98,6 +113,17 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
 
   return (
     <div>
+      <div className="mb-3">
+        <SelecteurJours jours={jours} valeur={cleJour} onChange={setJourChoisi} aujourdhui={aujourdhuiDans(tz, maintenant)} />
+        <button
+          type="button"
+          onClick={() => setGestionJours(true)}
+          className={`min-h-[40px] text-sm text-or-fonce underline underline-offset-4 ${jours.length > 1 ? "mt-1" : ""}`}
+        >
+          {jours.length > 1 ? "Gérer les jours" : "+ Ajouter un jour (veille, brunch…)"}
+        </button>
+      </div>
+
       <Bouton className="w-full" onClick={() => setEdition("nouveau")} disabled={reorganiser}>
         <span aria-hidden className="text-xl leading-none">+</span> Ajouter un moment
       </Bouton>
@@ -146,8 +172,8 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
 
       <ol className="mt-5 flex flex-col gap-2">
         {moments?.map((m, index) => {
-          const nuit = estApresMinuit(m.debut, mariage.date_mariage, tz);
-          const nuitAvant = index > 0 && estApresMinuit(moments[index - 1].debut, mariage.date_mariage, tz);
+          const nuit = estApresMinuit(m.debut, jour.date, tz);
+          const nuitAvant = index > 0 && estApresMinuit(moments[index - 1].debut, jour.date, tz);
           return (
             <Fragment key={m.id}>
               {nuit && !nuitAvant && (
@@ -199,6 +225,18 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
         })}
       </ol>
 
+      <Feuille titre="Les jours du mariage" ouverte={gestionJours} onFermer={fermerGestionJours}>
+        <GestionJours
+          mariage={mariage}
+          journees={journees}
+          moments={tous ?? []}
+          onModifie={async (cleAffichee) => {
+            await charger();
+            if (cleAffichee !== undefined) setJourChoisi(cleAffichee);
+          }}
+        />
+      </Feuille>
+
       <Feuille titre="Signaler un retard" ouverte={retard !== null} onFermer={fermerRetard}>
         {retard && moments && (
           <FormulaireRetard
@@ -229,10 +267,13 @@ export function Deroule({ mariage }: { mariage: Mariage }) {
             lieuxConnus={lieuxConnus}
             initial={edition === "nouveau" ? undefined : edition}
             heureProposee={heureProposee}
+            jours={jours}
+            jourChoisi={cleJour}
             onEnregistrer={async (saisie) => {
               if (edition === "nouveau") await creerMoment(mariage.id, saisie, moments?.length ?? 0);
               else await modifierMoment(edition.id, saisie);
               await charger();
+              setJourChoisi(cleDuJour(saisie.journee_id)); // on suit le moment s'il a changé de jour
               fermer();
             }}
             onSupprimer={

@@ -14,6 +14,7 @@ export type MomentVue = {
   notes: string | null;
   ordre: number;
   raccourci?: boolean;
+  journee_id?: string | null;
   intervenants: string[];
 };
 
@@ -41,6 +42,7 @@ export type Vue = {
     visibilite: Visibilite;
   }[];
   annonces?: { id: string; texte: string; auteur: string | null; le: string }[];
+  journees?: { id: string; date_jour: string; titre: string | null }[];
 };
 
 type Memoire = { vue: Vue; chargeLe: number };

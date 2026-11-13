@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Protege } from "@/components/Protege";
 import { SECTIONS_FICHE } from "@/components/fiche/AffichageFiche";
-import { lireMariage, listerFiche, listerIntervenants, listerMoments } from "@/lib/donnees";
+import { lireMariage, listerFiche, listerIntervenants, listerJournees, listerMoments } from "@/lib/donnees";
+import { cleDuJour, jourLong, listeDesJours, plageDeDates, type Jour } from "@/lib/jours";
 import { dateLongue } from "@/lib/dates";
 import { messageErreur } from "@/lib/erreurs";
 import { dureeLisible, estApresMinuit, heureAffichee, minutesEntre } from "@/lib/heures";
 import { nomMariage, trierMoments, type ElementFiche, type Intervenant, type Mariage, type Moment } from "@/lib/types";
 
-type Donnees = { mariage: Mariage; moments: Moment[]; intervenants: Intervenant[]; fiche: ElementFiche[] };
+type Donnees = { mariage: Mariage; moments: Moment[]; intervenants: Intervenant[]; fiche: ElementFiche[]; jours: Jour[] };
 
 export function VersionImprimable() {
   return (
@@ -29,10 +30,10 @@ function Contenu() {
   const [avecPrestataires, setAvecPrestataires] = useState(true);
 
   useEffect(() => {
-    Promise.all([lireMariage(id), listerMoments(id), listerIntervenants(id), listerFiche(id)])
-      .then(([mariage, moments, intervenants, fiche]) => {
+    Promise.all([lireMariage(id), listerMoments(id), listerIntervenants(id), listerFiche(id), listerJournees(id)])
+      .then(([mariage, moments, intervenants, fiche, journees]) => {
         if (!mariage) return setErreur("Ce mariage est introuvable.");
-        setD({ mariage, moments: trierMoments(moments), intervenants, fiche });
+        setD({ mariage, moments: trierMoments(moments), intervenants, fiche, jours: listeDesJours(mariage.date_mariage, journees) });
       })
       .catch((e) => setErreur(messageErreur(e)));
   }, [id]);
@@ -76,12 +77,19 @@ function Contenu() {
           <p className="text-[11px] uppercase tracking-[0.2em] text-or-fonce">Déroulé du mariage de</p>
           <h1 className="text-2xl font-medium">{nomMariage(d.mariage)}</h1>
           <p className="text-encre-doux first-letter:uppercase">
-            {dateLongue(d.mariage.date_mariage)}
+            {plageDeDates(d.jours) ?? dateLongue(d.mariage.date_mariage)}
             {d.mariage.lieu_principal && ` · ${d.mariage.lieu_principal}`}
           </p>
         </header>
 
-        <h2 className="mt-5 text-sm font-medium uppercase tracking-wider text-or-fonce">Déroulé</h2>
+        {d.jours.map((jour) => {
+          const momentsJour = d.moments.filter((m) => cleDuJour(m.journee_id) === jour.cle);
+          if (d.jours.length > 1 && momentsJour.length === 0) return null;
+          return (
+            <section key={jour.cle} className="break-inside-avoid-page">
+        <h2 className="mt-5 text-sm font-medium uppercase tracking-wider text-or-fonce">
+          {d.jours.length > 1 ? `${jourLong(jour.date)} · ${jour.titre || "Journée"}` : "Déroulé"}
+        </h2>
         <table className="mt-2 w-full border-collapse">
           <thead>
             <tr className="border-b border-or-clair text-left text-[11px] uppercase tracking-wider text-encre-doux">
@@ -92,9 +100,9 @@ function Contenu() {
             </tr>
           </thead>
           <tbody>
-            {d.moments.map((m, i) => {
-              const nuit = estApresMinuit(m.debut, d.mariage.date_mariage, tz);
-              const nuitAvant = i > 0 && estApresMinuit(d.moments[i - 1].debut, d.mariage.date_mariage, tz);
+            {momentsJour.map((m, i) => {
+              const nuit = estApresMinuit(m.debut, jour.date, tz);
+              const nuitAvant = i > 0 && estApresMinuit(momentsJour[i - 1].debut, jour.date, tz);
               return (
                 <Fragment key={m.id}>
                   {nuit && !nuitAvant && (
@@ -131,6 +139,9 @@ function Contenu() {
             })}
           </tbody>
         </table>
+            </section>
+          );
+        })}
 
         <div className="mt-6 grid gap-6 print:grid-cols-2 sm:grid-cols-2">
           <section className="break-inside-avoid">

@@ -9,6 +9,7 @@ import { messageErreur } from "@/lib/erreurs";
 import { ajouterMinutes, dureeLisible, heureSaisie, minutesEntre, versInstant } from "@/lib/heures";
 import type { MomentSaisi } from "@/lib/donnees";
 import { estTempsFort, type Intervenant, type Mariage, type Moment } from "@/lib/types";
+import { JOUR_J, cleDuJour, jourCourt, type Jour } from "@/lib/jours";
 
 const TITRES_SUGGERES = [
   "Préparatifs de la mariée",
@@ -44,9 +45,13 @@ export function FormulaireMoment({
   lieuxConnus,
   initial,
   heureProposee,
+  jours,
+  jourChoisi,
   onEnregistrer,
   onSupprimer,
 }: {
+  jours: Jour[];
+  jourChoisi: string;
   mariage: Mariage;
   intervenants: Intervenant[];
   lieuxConnus: string[];
@@ -59,6 +64,8 @@ export function FormulaireMoment({
   const dureeInitiale = initial?.fin ? minutesEntre(initial.debut, initial.fin) : 30;
 
   const [titre, setTitre] = useState(initial?.titre ?? "");
+  const [cleJour, setCleJour] = useState(initial ? cleDuJour(initial.journee_id) : jourChoisi);
+  const jour = jours.find((j) => j.cle === cleJour) ?? jours.find((j) => j.cle === JOUR_J)!;
   const [heure, setHeure] = useState(initial ? heureSaisie(initial.debut, tz) : (heureProposee ?? "14:00"));
   const [modeFin, setModeFin] = useState<ModeFin>(initial && !initial.fin ? "aucune" : "duree");
   const [duree, setDuree] = useState(dureeInitiale);
@@ -108,7 +115,7 @@ export function FormulaireMoment({
       className="flex flex-col gap-4"
       onSubmit={(e) => {
         e.preventDefault();
-        const debut = versInstant(mariage.date_mariage, heure, tz);
+        const debut = versInstant(jour.date, heure, tz);
         agir(() =>
           onEnregistrer({
             titre: titre.trim(),
@@ -117,6 +124,7 @@ export function FormulaireMoment({
             lieu: lieu.trim() || null,
             notes: notes.trim() || null,
             raccourci,
+            journee_id: jour.id,
             intervenants: assignes,
           }),
         );
@@ -141,6 +149,16 @@ export function FormulaireMoment({
         ))}
       </datalist>
 
+      {jours.length > 1 && (
+        <Selecteur id="jour" libelle="Jour" value={cleJour} onChange={(e) => setCleJour(e.target.value)}>
+          {jours.map((j) => (
+            <option key={j.cle} value={j.cle}>
+              {jourCourt(j.date)} · {j.titre || "Journée"}
+            </option>
+          ))}
+        </Selecteur>
+      )}
+
       <Champ
         id="heure"
         libelle="Heure de début"
@@ -148,7 +166,7 @@ export function FormulaireMoment({
         value={heure}
         onChange={(e) => setHeure(e.target.value)}
         required
-        aide="Une heure entre 0 h et 5 h 59 est placée dans la nuit qui suit le mariage."
+        aide="Une heure entre 0 h et 5 h 59 est placée dans la nuit qui suit ce jour."
       />
 
       <Choix<ModeFin>

@@ -40,6 +40,7 @@ export type Moment = {
   notes: string | null;
   ordre: number;
   raccourci: boolean; // temps fort affiché en raccourci
+  journee_id: string | null; // jour du moment (vide = le jour J)
   intervenants: string[]; // identifiants des intervenants assignés
 };
 
@@ -77,3 +78,6 @@ export function lienGoogleMaps(adresse: string) {
 export function lienTelephone(tel: string) {
   return `tel:${tel.replace(/[^\d+]/g, "")}`;
 }
+
+// Jour supplémentaire d'un mariage (veille, lendemain…) ; le jour J reste date_mariage
+export type Journee = { id: string; date_jour: string; titre: string | null };

@@ -14,6 +14,8 @@ export function messageErreur(erreur: ErreurBrute): string {
     return "Cette adresse e-mail ne semble pas valide.";
   if (code === "42501" || m.includes("row-level security") || m.includes("permission denied"))
     return "Vous n'avez pas accès à cette information.";
+  if (code === "23505")
+    return "Cet élément existe déjà (par exemple, ce jour fait déjà partie du mariage).";
   if (code === "23514" || code === "22007" || code === "22008")
     return "Une des valeurs saisies n'est pas valide. Vérifiez le formulaire.";
   if (m.includes("failed to fetch") || m.includes("network") || m.includes("load failed"))

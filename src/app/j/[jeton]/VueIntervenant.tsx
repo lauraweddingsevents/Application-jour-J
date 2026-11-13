@@ -10,6 +10,8 @@ import { Raccourcis, allerAuMoment } from "@/components/Raccourcis";
 import { supabaseAnonyme } from "@/lib/supabase/anonyme";
 import { Logo } from "@/components/Logo";
 import { GuideInstallation } from "@/components/GuideInstallation";
+import { SelecteurJours } from "@/components/SelecteurJours";
+import { aujourdhuiDans, cleDuJour, jourParDefaut, listeDesJours, plageDeDates, quandEstCeJour } from "@/lib/jours";
 import { BlocAlertes } from "@/components/BlocAlertes";
 import { lireDelai, useAlertesDansLaPage } from "@/lib/alertes";
 import { dateLongue } from "@/lib/dates";
@@ -108,6 +110,16 @@ function Contenu({
     [vue.moments],
   );
   const miens = moments.filter((m) => m.intervenants.includes(vue.moi.id));
+
+  // Plusieurs jours (veille, jour J, lendemain…) : listes filtrées sur le jour choisi
+  const jours = useMemo(() => listeDesJours(vue.mariage.date_mariage, vue.journees ?? []), [vue.mariage.date_mariage, vue.journees]);
+  const [jourChoisi, setJourChoisi] = useState<string | null>(null);
+  const cleJour = jours.some((j) => j.cle === jourChoisi) ? jourChoisi! : jourParDefaut(jours, tz, maintenant);
+  const jour = jours.find((j) => j.cle === cleJour)!;
+  const duJour = (liste: MomentVue[]) => liste.filter((m) => cleDuJour(m.journee_id) === cleJour);
+  const momentsJour = duJour(moments);
+  const miensJour = duJour(miens);
+  const dateDe = (m: MomentVue) => jours.find((j) => j.cle === cleDuJour(m.journee_id))?.date ?? vue.mariage.date_mariage;
   const noms = useMemo(() => new Map(vue.intervenants.map((i) => [i.id, i.nom])), [vue.intervenants]);
 
   const enCours = moments.filter(
@@ -141,7 +153,7 @@ function Contenu({
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-or-fonce">Mariage de</p>
         <h1 className="mt-1 text-2xl font-medium">{nomMariage(vue.mariage)}</h1>
         <p className="mt-1 text-sm text-encre-doux first-letter:uppercase">
-          {dateLongue(vue.mariage.date_mariage)}
+          {plageDeDates(jours) ?? dateLongue(vue.mariage.date_mariage)}
           {vue.mariage.lieu_principal && ` · ${vue.mariage.lieu_principal}`}
         </p>
         <p className="mt-4 text-encre-doux">
@@ -237,7 +249,10 @@ function Contenu({
         ))}
         {prochaineMission && (
           <EnAvant
-            etiquette="Votre prochaine mission"
+            etiquette={`Votre prochaine mission${(() => {
+              const q = quandEstCeJour(dateDe(prochaineMission), tz, maintenant);
+              return q ? ` · ${q}` : "";
+            })()}`}
             moment={prochaineMission}
             tz={tz}
             moi
@@ -262,6 +277,17 @@ function Contenu({
         <GuideInstallation />
       </div>
 
+      {jours.length > 1 && (
+        <div className="mt-6">
+          <SelecteurJours
+            jours={jours}
+            valeur={cleJour}
+            onChange={setJourChoisi}
+            aujourdhui={aujourdhuiDans(tz, maintenant)}
+          />
+        </div>
+      )}
+
       <nav className="sticky top-0 z-10 -mx-4 mt-6 bg-creme/95 px-4 py-2 backdrop-blur" aria-label="Affichage">
         <div className="grid grid-cols-3 gap-1 rounded-full bg-creme-fonce p-1">
           {(
@@ -285,7 +311,7 @@ function Contenu({
           ))}
         </div>
         {onglet !== "infos" && (
-          <Raccourcis moments={moments} tz={tz} maintenant={maintenant} onAller={aller} />
+          <Raccourcis moments={momentsJour} tz={tz} maintenant={maintenant} onAller={aller} />
         )}
       </nav>
 
@@ -298,21 +324,23 @@ function Contenu({
           )
         ) : (
           <ListeMoments
-            moments={onglet === "miens" ? miens : moments}
+            moments={onglet === "miens" ? miensJour : momentsJour}
             tous={moments}
             moiId={vue.moi.id}
             noms={noms}
             tz={tz}
-            dateMariage={vue.mariage.date_mariage}
+            dateMariage={jour.date}
             maintenant={maintenant}
             changes={derniereMaj}
             surligner={onglet === "tout"}
             onRetard={surRetard}
           />
         )}
-        {onglet === "miens" && miens.length === 0 && (
+        {onglet === "miens" && miensJour.length === 0 && (
           <Carte className="text-center text-encre-doux">
-            Aucun moment ne vous est encore attribué. Consultez « Tout le déroulé ».
+            {jours.length > 1
+              ? "Aucun moment ne vous est attribué ce jour-là. Consultez « Tout le déroulé » ou un autre jour."
+              : "Aucun moment ne vous est encore attribué. Consultez « Tout le déroulé »."}
           </Carte>
         )}
       </div>
@@ -344,7 +372,7 @@ function Contenu({
           {retard && (
             <FormulaireRetard
               moment={retard}
-              moments={moments}
+              moments={moments.filter((m) => cleDuJour(m.journee_id) === cleDuJour(retard.journee_id))}
               tz={tz}
               onValider={async (minutes, suivants) => {
                 const { data, error } = await supabaseAnonyme().rpc("decaler_moments", {
