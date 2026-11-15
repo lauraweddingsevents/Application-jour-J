@@ -7,6 +7,7 @@ import { Selecteur } from "@/components/ui/Selecteur";
 import { messageErreur } from "@/lib/erreurs";
 import { lireProfil, modifierProfil, type Profil } from "@/lib/plans";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
+import { SuppressionCompte } from "./SuppressionCompte";
 import { TYPES_COMPTE, type TypeCompte } from "@/plan/types";
 
 // Informations du compte (type, nom), mot de passe et déconnexion.
@@ -96,6 +97,7 @@ export function ReglagesCompte() {
         </Bouton>
       </Carte>
 
+      <SuppressionCompte />
     </div>
   );
 }

@@ -14,6 +14,11 @@ export default function ConnexionPlan() {
       <h1 className="mt-10 text-center text-xl font-medium">Accéder à mes plans</h1>
       <p className="mt-2 text-center text-encre-doux">Par un lien reçu par e-mail, ou avec votre mot de passe.</p>
       <FormulaireConnexion suiteParDefaut="/plans" />
+      <p className="mt-8 text-center text-xs text-encre-doux">
+        En créant un compte, vous acceptez les{" "}
+        <Link href="/plans/conditions" className="underline underline-offset-4">conditions d&apos;utilisation</Link> et la{" "}
+        <Link href="/plans/mentions-legales" className="underline underline-offset-4">politique de confidentialité</Link>.
+      </p>
     </main>
   );
 }

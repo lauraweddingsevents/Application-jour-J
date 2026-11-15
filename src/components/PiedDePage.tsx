@@ -7,15 +7,27 @@ export function PiedDePage({ marque = "coordo" }: { marque?: "coordo" | "plan" }
         {marque === "plan" ? "Mon plan de salle" : "Ma Coordo"} · une création{" "}
         <span className="text-or-fonce">Laura Weddings &amp; Events</span>
       </p>
-      <p className="mt-2">
-        <Link href="/aide" className="underline underline-offset-4">
-          Aide
-        </Link>
-        {" · "}
-        <Link href="/mentions-legales" className="underline underline-offset-4">
-          Mentions légales et confidentialité
-        </Link>
-      </p>
+      {marque === "plan" ? (
+        <p className="mt-2">
+          <Link href="/plans/mentions-legales" className="underline underline-offset-4">
+            Mentions légales et confidentialité
+          </Link>
+          {" · "}
+          <Link href="/plans/conditions" className="underline underline-offset-4">
+            Conditions d&apos;utilisation
+          </Link>
+        </p>
+      ) : (
+        <p className="mt-2">
+          <Link href="/aide" className="underline underline-offset-4">
+            Aide
+          </Link>
+          {" · "}
+          <Link href="/mentions-legales" className="underline underline-offset-4">
+            Mentions légales et confidentialité
+          </Link>
+        </p>
+      )}
     </footer>
   );
 }

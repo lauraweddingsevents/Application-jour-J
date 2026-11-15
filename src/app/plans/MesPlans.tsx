@@ -148,6 +148,11 @@ function Contenu() {
           />
         )}
       </Feuille>
+      <p className="mt-10 text-center text-xs text-encre-doux">
+        <Link href="/plans/mentions-legales" className="underline underline-offset-4">Confidentialité</Link>
+        {" · "}
+        <Link href="/plans/conditions" className="underline underline-offset-4">Conditions d&apos;utilisation</Link>
+      </p>
     </main>
   );
 }
