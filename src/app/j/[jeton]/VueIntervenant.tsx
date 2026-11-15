@@ -17,9 +17,10 @@ import { lireDelai, useAlertesDansLaPage } from "@/lib/alertes";
 import { dateLongue } from "@/lib/dates";
 import { dureeLisible, estApresMinuit, heureAffichee } from "@/lib/heures";
 import { nomMariage } from "@/lib/types";
+import { PlanPrestataire, usePlanIntervenant } from "@/components/plan/PlanPrestataire";
 import { finEffective, useAnnoncesNonLues, useMaintenant, useVue, type MomentVue, type Vue } from "@/lib/vue";
 
-type Onglet = "miens" | "tout" | "infos";
+type Onglet = "miens" | "tout" | "infos" | "plan";
 
 export function VueIntervenant() {
   const { jeton } = useParams<{ jeton: string }>();
@@ -82,6 +83,9 @@ function Contenu({
   recharger: () => Promise<void>;
 }) {
   const [onglet, setOnglet] = useState<Onglet>("miens");
+  // Plan de salle du mariage, adapté au métier de l'intervenant
+  const plan = usePlanIntervenant(jeton, chargeLe);
+  const avecPlan = Boolean(plan?.plans.length);
   const maintenant = useMaintenant();
   const [retard, setRetard] = useState<MomentVue | null>(null);
   const [annonce, setAnnonce] = useState("");
@@ -289,12 +293,13 @@ function Contenu({
       )}
 
       <nav className="sticky top-0 z-10 -mx-4 mt-6 bg-creme/95 px-4 py-2 backdrop-blur" aria-label="Affichage">
-        <div className="grid grid-cols-3 gap-1 rounded-full bg-creme-fonce p-1">
+        <div className={`grid ${avecPlan ? "grid-cols-4" : "grid-cols-3"} gap-1 rounded-full bg-creme-fonce p-1`}>
           {(
             [
               ["miens", "Mes moments"],
               ["tout", "Tout le déroulé"],
               ["infos", "Infos pratiques"],
+              ...(avecPlan ? [["plan", "Plan de salle"]] : []),
             ] as [Onglet, string][]
           ).map(([id, texte]) => (
             <button
@@ -310,13 +315,17 @@ function Contenu({
             </button>
           ))}
         </div>
-        {onglet !== "infos" && (
+        {onglet !== "infos" && onglet !== "plan" && (
           <Raccourcis moments={momentsJour} tz={tz} maintenant={maintenant} onAller={aller} />
         )}
       </nav>
 
       <div className="mt-4">
-        {onglet === "infos" ? (
+        {onglet === "plan" && plan && avecPlan ? (
+          <PlanPrestataire donnees={plan} />
+        ) : onglet === "plan" ? (
+          <Carte className="text-center text-encre-doux">Le plan de salle n&apos;est plus disponible.</Carte>
+        ) : onglet === "infos" ? (
           vue.fiche.length ? (
             <AffichageFiche elements={vue.fiche} />
           ) : (

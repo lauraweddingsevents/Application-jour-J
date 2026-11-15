@@ -99,6 +99,7 @@ export function Intervenants({ mariage }: { mariage: Mariage }) {
               telephone: edition.telephone,
               email: edition.email,
               acces_coordination: edition.acces_coordination,
+              vue_plan: edition.vue_plan ?? null,
             }}
             onEnregistrer={async (saisie) => {
               const maj = await modifierIntervenant(edition.id, saisie);

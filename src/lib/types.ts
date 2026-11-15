@@ -1,3 +1,4 @@
+import type { VuePlan } from "@/lib/vuesPlan";
 // Les « fiches » manipulées par l'application (miroir de la base de données)
 
 export type Mariage = {
@@ -23,6 +24,7 @@ export type Intervenant = {
   email: string | null;
   jeton: string;
   acces_coordination: boolean;
+  vue_plan?: VuePlan | null; // vue du plan de salle dans son lien (vide = automatique)
   ordre: number;
 };
 

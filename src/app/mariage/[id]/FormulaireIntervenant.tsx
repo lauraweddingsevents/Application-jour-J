@@ -7,6 +7,7 @@ import { messageErreur } from "@/lib/erreurs";
 import { ROLES_PRESTATAIRES, ROLES_PROCHES, categoriePourRole } from "@/lib/roles";
 import type { IntervenantSaisi } from "@/lib/donnees";
 import type { Categorie } from "@/lib/types";
+import { VUES_PLAN, texteVue, vuePlanAuto, type VuePlan } from "@/lib/vuesPlan";
 
 const VIDE: IntervenantSaisi = {
   nom: "",
@@ -143,6 +144,28 @@ export function FormulaireIntervenant({
             Son lien lui permettra de décaler les horaires en cas de retard
             (par exemple pour une assistante ou un témoin de confiance).
           </span>
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-1.5" htmlFor="vuePlan">
+        <span className="font-medium">Plan de salle dans son lien</span>
+        <select
+          id="vuePlan"
+          value={i.vue_plan ?? ""}
+          onChange={(e) => maj("vue_plan", (e.target.value || null) as VuePlan | null)}
+          className="min-h-[52px] rounded-2xl bg-blanc px-4 ring-1 ring-or-clair focus:outline-none focus:ring-2 focus:ring-or"
+        >
+          <option value="">
+            Automatique : {texteVue(vuePlanAuto(i.role, i.categorie, i.acces_coordination))}
+          </option>
+          {VUES_PLAN.map((v) => (
+            <option key={v.valeur} value={v.valeur}>
+              {v.texte}
+            </option>
+          ))}
+        </select>
+        <span className="text-sm text-encre-doux">
+          {VUES_PLAN.find((v) => v.valeur === (i.vue_plan ?? vuePlanAuto(i.role, i.categorie, i.acces_coordination)))?.detail}
         </span>
       </label>
 

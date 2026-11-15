@@ -9,7 +9,7 @@ import type { Annonce, ElementFiche, Intervenant, Journee, Mariage, Moment } fro
 const CHAMPS_MARIAGE =
   "id, nom_marie_1, nom_marie_2, date_mariage, lieu_principal, fuseau_horaire, delai_alerte_defaut, canal";
 const CHAMPS_INTERVENANT =
-  "id, mariage_id, nom, role, categorie, telephone, email, jeton, acces_coordination, ordre";
+  "id, mariage_id, nom, role, categorie, telephone, email, jeton, acces_coordination, vue_plan, ordre";
 
 function verifier<T>(res: { data: T | null; error: unknown }): T {
   if (res.error) throw res.error;
@@ -76,7 +76,7 @@ export async function listerIntervenants(mariageId: string): Promise<Intervenant
 
 export type IntervenantSaisi = Pick<
   Intervenant,
-  "nom" | "role" | "categorie" | "telephone" | "email" | "acces_coordination"
+  "nom" | "role" | "categorie" | "telephone" | "email" | "acces_coordination" | "vue_plan"
 >;
 
 export async function creerIntervenant(
