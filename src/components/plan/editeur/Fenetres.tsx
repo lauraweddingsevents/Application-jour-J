@@ -20,7 +20,17 @@ import type { Element, PlanContenu } from "@/plan/types";
 type Modifier = (fn: (c: PlanContenu) => PlanContenu, cle?: string) => void;
 
 // ---------- La salle ----------
-export function FenetreSalle({ contenu, modifier, onFini }: { contenu: PlanContenu; modifier: Modifier; onFini: () => void }) {
+export function FenetreSalle({
+  contenu,
+  modifier,
+  onFini,
+  structureFixe = false,
+}: {
+  contenu: PlanContenu;
+  modifier: Modifier;
+  onFini: () => void;
+  structureFixe?: boolean;
+}) {
   const enL = lireSalleEnL(contenu.room);
   const [forme, setForme] = useState<"rect" | "L">(contenu.room.points ? "L" : "rect");
   const [w, setW] = useState(String(contenu.room.w / 100));
@@ -43,10 +53,16 @@ export function FenetreSalle({ contenu, modifier, onFini }: { contenu: PlanConte
       onSubmit={(e) => {
         e.preventDefault();
         const p = parseInt(passage, 10);
-        modifier((c) => ({ ...c, room: salle, passage: p >= 0 ? p : c.passage }));
+        modifier((c) => ({ ...c, room: structureFixe ? c.room : salle, passage: p >= 0 ? p : c.passage }));
         onFini();
       }}
     >
+      {structureFixe && (
+        <p className="rounded-xl bg-or/15 px-3 py-2 text-sm text-or-fonce">
+          🔒 La forme et les dimensions de la salle sont fixées par le lieu de réception.
+        </p>
+      )}
+      <fieldset disabled={structureFixe} className="flex flex-col gap-4 disabled:opacity-60">
       <Choix<"rect" | "L">
         libelle="Forme de la salle"
         valeur={forme}
@@ -80,6 +96,7 @@ export function FenetreSalle({ contenu, modifier, onFini }: { contenu: PlanConte
           Surface : {surfaceSalle(contourSalle(salle)).toLocaleString("fr-FR", { maximumFractionDigits: 1 })} m²
         </p>
       </div>
+      </fieldset>
       <Champ
         id="passage"
         libelle="Passage minimum entre les tables, chaises comprises (cm)"

@@ -24,7 +24,17 @@ import { useSession } from "@/lib/useSession";
 
 const nomRole = (r: Role) => ROLES.find((x) => x.valeur === r)?.texte ?? r;
 
-export function FenetrePartage({ planId, nomPlan, gestionnaire }: { planId: string; nomPlan: string; gestionnaire: boolean }) {
+export function FenetrePartage({
+  planId,
+  nomPlan,
+  gestionnaire,
+  modele = false,
+}: {
+  planId: string;
+  nomPlan: string;
+  gestionnaire: boolean;
+  modele?: boolean;
+}) {
   const session = useSession();
   const [membres, setMembres] = useState<Membre[] | null>(null);
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -69,6 +79,20 @@ export function FenetrePartage({ planId, nomPlan, gestionnaire }: { planId: stri
 
   return (
     <div className="flex flex-col gap-5">
+      {modele && gestionnaire && (
+        <section>
+          <h3 className="text-sm font-medium">Envoyer la salle aux couples</h3>
+          <div className="mt-2">
+            <LigneLien
+              titre="Lien pour les couples"
+              detail="Chaque couple crée son propre plan à partir de votre salle, sans pouvoir modifier la structure (éléments 🔒). Le même lien sert pour tous vos couples."
+              lien={liens.find((l) => l.role === "modele")}
+              onCreer={() => agir(() => creerLien(planId, "modele"))}
+              onDesactiver={(l) => agir(() => desactiverLien(l.id), "Lien désactivé : les plans déjà créés restent intacts.")}
+            />
+          </div>
+        </section>
+      )}
       <section>
         <h3 className="text-sm font-medium">Personnes ayant accès</h3>
         {membres === null && <p className="mt-2 text-sm text-encre-doux">Chargement…</p>}

@@ -214,7 +214,7 @@ export function recapitulatif(plan: PlanContenu) {
 // Renumérote « Table 1, 2, 3… » de gauche à droite et de haut en bas.
 // Les tables au nom personnalisé (« Table d'honneur ») gardent leur nom.
 export function numeroterTables(plan: PlanContenu): PlanContenu {
-  const numerotables = plan.items.filter((e) => estTable(e) && /^Table \d+$/.test(e.name));
+  const numerotables = plan.items.filter((e) => estTable(e) && !e.verrou && /^Table \d+$/.test(e.name));
   const rangee = 200; // tables à moins de 2 m de hauteur d'écart : même rangée
   const tries = [...numerotables].sort((a, b) => (Math.abs(a.y - b.y) < rangee ? a.x - b.x : a.y - b.y));
   const noms = new Map(tries.map((t, i) => [t.id, `Table ${i + 1}`]));

@@ -11,6 +11,8 @@ import { Canevas } from "@/components/plan/editeur/Canevas";
 import { LogoPlan } from "@/components/plan/LogoPlan";
 import { messageErreur } from "@/lib/erreurs";
 import { planParLien, rejoindreParLien, type VuePlanParLien } from "@/lib/partagePlans";
+import { creerDepuisModele } from "@/lib/plans";
+import { DessinPlan } from "@/components/plan/DessinPlan";
 import { useSession } from "@/lib/useSession";
 import { normaliser } from "@/plan/normaliser";
 import { alertes, estTable, places, pluriel, recapitulatif, resume, texteMenus } from "@/plan/moteur";
@@ -45,6 +47,8 @@ export function LienPlan() {
         Il a peut-être été désactivé. Demandez un nouveau lien à la personne qui vous l&apos;a envoyé.
       </Message>
     );
+
+  if (vue.role === "modele") return <PageModele vue={vue} jeton={jeton} connecte={!!session} />;
 
   if (vue.role === "editeur") {
     if (session) return <Message titre="Ouverture du plan…">{erreur || "Un instant."}</Message>;
@@ -169,5 +173,66 @@ function Visionneuse({ vue, jeton, connecte }: { vue: VuePlanParLien; jeton: str
         )}
       </section>
     </div>
+  );
+}
+
+// Lien de salle modèle : le couple crée son plan à partir de la salle du lieu
+function PageModele({ vue, jeton, connecte }: { vue: VuePlanParLien; jeton: string; connecte: boolean }) {
+  const router = useRouter();
+  const contenu = normaliser(vue.contenu!);
+  const [nom, setNom] = useState(`Notre mariage – ${vue.nom}`);
+  const [partager, setPartager] = useState(true);
+  const [enCours, setEnCours] = useState(false);
+  const [erreur, setErreur] = useState("");
+  const lieu = vue.lieu || "le lieu de réception";
+
+  return (
+    <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8">
+      <Link href="/plan-de-salle" className="block text-center">
+        <LogoPlan />
+      </Link>
+      <p className="mt-8 text-center text-xs font-medium uppercase tracking-[0.2em] text-or-fonce">{lieu}</p>
+      <h1 className="mt-1 text-center text-2xl font-medium">{vue.nom}</h1>
+      <p className="mt-2 text-center text-encre-doux">
+        Créez votre plan de salle à partir de cette salle : placez vos tables et vos invités. Les éléments 🔒 sont fixés par {lieu}.
+      </p>
+      <div className="mt-6 overflow-hidden rounded-carte bg-blanc p-2 ring-1 ring-or-clair/50">
+        <DessinPlan plan={contenu} className="h-auto w-full" />
+      </div>
+      {connecte ? (
+        <Carte className="mt-6 flex flex-col gap-4">
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            Nom de votre plan
+            <input value={nom} onChange={(e) => setNom(e.target.value)} className="min-h-[52px] rounded-2xl border border-or-clair bg-blanc px-4 font-normal" />
+          </label>
+          <label className="flex cursor-pointer items-start gap-3 text-sm">
+            <input type="checkbox" checked={partager} onChange={(e) => setPartager(e.target.checked)} className="mt-0.5 h-5 w-5 shrink-0 accent-[#A07E5E]" />
+            <span>
+              Partager mon plan avec {lieu} (lecture seule), pour qu&apos;il prépare l&apos;installation.
+            </span>
+          </label>
+          {erreur && <p className="text-sm text-alerte">{erreur}</p>}
+          <Bouton
+            disabled={enCours || !nom.trim()}
+            onClick={async () => {
+              setEnCours(true);
+              setErreur("");
+              try {
+                router.push(`/plans/${await creerDepuisModele(jeton, nom, partager)}`);
+              } catch (e) {
+                setErreur(messageErreur(e as Error));
+                setEnCours(false);
+              }
+            }}
+          >
+            {enCours ? "Création…" : "Créer notre plan"}
+          </Bouton>
+        </Carte>
+      ) : (
+        <BoutonLien href={`/plans/connexion?suite=${encodeURIComponent(`/p/${jeton}`)}`} className="mt-6 w-full">
+          Créer mon compte pour faire notre plan
+        </BoutonLien>
+      )}
+    </main>
   );
 }

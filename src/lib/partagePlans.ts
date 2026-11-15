@@ -18,12 +18,12 @@ function verifier<T>(res: { data: T | null; error: unknown }): T {
 }
 
 // ---------- Liens ----------
-export type LienPlan = { id: string; jeton: string; role: "lecteur" | "editeur"; actif: boolean };
+export type LienPlan = { id: string; jeton: string; role: "lecteur" | "editeur" | "modele"; actif: boolean };
 
 export async function listerLiens(planId: string): Promise<LienPlan[]> {
   return verifier(await sb().from("plans_liens").select("id, jeton, role, actif").eq("plan_id", planId).eq("actif", true));
 }
-export async function creerLien(planId: string, role: "lecteur" | "editeur"): Promise<LienPlan> {
+export async function creerLien(planId: string, role: "lecteur" | "editeur" | "modele"): Promise<LienPlan> {
   const { data } = await sb().auth.getSession();
   return verifier(
     await sb().from("plans_liens").insert({ plan_id: planId, role, cree_par: data.session?.user.id }).select("id, jeton, role, actif").single(),
@@ -37,8 +37,9 @@ export const adresseLien = (jeton: string) => `${window.location.origin}/p/${jet
 export type VuePlanParLien = {
   plan_id: string;
   nom: string;
-  role: "lecteur" | "editeur";
+  role: "lecteur" | "editeur" | "modele";
   deja_membre: boolean;
+  lieu: string | null;
   updated_at: string;
   contenu: PlanContenu | null;
 };

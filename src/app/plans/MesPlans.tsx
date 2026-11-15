@@ -35,7 +35,7 @@ export function MesPlans() {
   );
 }
 
-type Fenetre = { type: "nouveau" } | { type: "importer" } | { type: "actions"; plan: Plan } | null;
+type Fenetre = { type: "nouveau"; modele: boolean } | { type: "importer" } | { type: "actions"; plan: Plan } | null;
 
 function Contenu() {
   const router = useRouter();
@@ -60,7 +60,8 @@ function Contenu() {
   }, []);
   useEffect(charger, [charger]);
 
-  const actifs = (plans ?? []).filter((p) => !p.archive);
+  const modeles = (plans ?? []).filter((p) => p.est_modele && !p.archive);
+  const actifs = (plans ?? []).filter((p) => !p.archive && !p.est_modele);
   const archives = (plans ?? []).filter((p) => p.archive);
   const affiches = voirArchives ? archives : actifs;
 
@@ -70,7 +71,7 @@ function Contenu() {
       <h1 className="mt-8 text-2xl font-medium">Mes plans</h1>
 
       <div className="mt-6 flex gap-2">
-        <Bouton className="flex-1" onClick={() => setFenetre({ type: "nouveau" })}>
+        <Bouton className="flex-1" onClick={() => setFenetre({ type: "nouveau", modele: false })}>
           <span aria-hidden className="text-xl leading-none">+</span> Nouveau plan
         </Bouton>
       </div>
@@ -100,41 +101,21 @@ function Contenu() {
         </div>
       )}
 
-      <ul className="mt-6 flex flex-col gap-3">
-        {affiches.map((p) => {
-          const r = resume(p.contenu);
-          return (
-            <li key={p.id}>
-              <Carte className="flex gap-3 p-3">
-                <Link href={`/plans/${p.id}`} className="flex min-w-0 flex-1 gap-3">
-                  <span className="w-24 shrink-0 overflow-hidden rounded-xl bg-creme ring-1 ring-or-clair/40">
-                    <DessinPlan plan={p.contenu} cotes={false} className="h-auto w-full" />
-                  </span>
-                  <span className="min-w-0 flex-1 py-1">
-                    <span className="block truncate font-medium">{p.nom}</span>
-                    <span className="block text-sm text-encre-doux">
-                      {pluriel(r.tables, "table")} · {pluriel(r.places, "place")}
-                      {r.invites ? ` · ${pluriel(r.invites, "invité")}` : ""}
-                    </span>
-                    <span className="block text-xs text-encre-doux">
-                      Modifié {ilYa(p.updated_at)}
-                      {p.role && p.role !== "proprietaire" && ` · partagé avec vous (${p.role === "editeur" ? "modification" : "lecture"})`}
-                    </span>
-                  </span>
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setFenetre({ type: "actions", plan: p })}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-full text-xl text-encre-doux ring-1 ring-or-clair/60"
-                  aria-label={`Actions pour ${p.nom}`}
-                >
-                  ⋯
-                </button>
-              </Carte>
-            </li>
-          );
-        })}
-      </ul>
+      <ListePlans plans={affiches} onActions={(p) => setFenetre({ type: "actions", plan: p })} />
+
+      <section className="mt-10">
+        <div className="flex items-end justify-between gap-3">
+          <h2 className="text-lg font-medium">Mes salles modèles</h2>
+          <button type="button" onClick={() => setFenetre({ type: "nouveau", modele: true })} className="min-h-[40px] text-sm text-or-fonce underline underline-offset-4">
+            + Nouvelle salle
+          </button>
+        </div>
+        <p className="mt-1 text-sm text-encre-doux">
+          Pour les lieux de réception : dessinez votre salle une fois (murs, poteaux, portes…), puis envoyez-la aux couples.
+          Ils créent leur plan sans pouvoir modifier la structure.
+        </p>
+        <ListePlans plans={modeles} onActions={(p) => setFenetre({ type: "actions", plan: p })} />
+      </section>
 
       <p className="mt-8 text-center text-sm">
         <button type="button" onClick={() => setFenetre({ type: "importer" })} className="min-h-[44px] text-or-fonce underline underline-offset-4">
@@ -142,8 +123,8 @@ function Contenu() {
         </button>
       </p>
 
-      <Feuille titre="Nouveau plan" ouverte={fenetre?.type === "nouveau"} onFermer={fermer}>
-        <NouveauPlan onCree={(p) => ouvrir(p.id)} />
+      <Feuille titre={fenetre?.type === "nouveau" && fenetre.modele ? "Nouvelle salle modèle" : "Nouveau plan"} ouverte={fenetre?.type === "nouveau"} onFermer={fermer}>
+        {fenetre?.type === "nouveau" && <NouveauPlan modele={fenetre.modele} onCree={(p) => ouvrir(p.id)} />}
       </Feuille>
       <Feuille titre="Importer un plan" ouverte={fenetre?.type === "importer"} onFermer={fermer}>
         <Importer onImporte={(p) => ouvrir(p.id)} />
@@ -164,9 +145,50 @@ function Contenu() {
   );
 }
 
-function NouveauPlan({ onCree }: { onCree: (p: Plan) => void }) {
+function ListePlans({ plans, onActions }: { plans: Plan[]; onActions: (p: Plan) => void }) {
+  return (
+      <ul className="mt-6 flex flex-col gap-3">
+        {plans.map((p) => {
+          const r = resume(p.contenu);
+          return (
+            <li key={p.id}>
+              <Carte className="flex gap-3 p-3">
+                <Link href={`/plans/${p.id}`} className="flex min-w-0 flex-1 gap-3">
+                  <span className="w-24 shrink-0 overflow-hidden rounded-xl bg-creme ring-1 ring-or-clair/40">
+                    <DessinPlan plan={p.contenu} cotes={false} className="h-auto w-full" />
+                  </span>
+                  <span className="min-w-0 flex-1 py-1">
+                    <span className="block truncate font-medium">{p.nom}</span>
+                    <span className="block text-sm text-encre-doux">
+                      {pluriel(r.tables, "table")} · {pluriel(r.places, "place")}
+                      {r.invites ? ` · ${pluriel(r.invites, "invité")}` : ""}
+                    </span>
+                    <span className="block text-xs text-encre-doux">
+                      Modifié {ilYa(p.updated_at)}
+                      {p.role && p.role !== "proprietaire" && ` · partagé avec vous (${p.role === "editeur" ? "modification" : "lecture"})`}
+                      {p.structure_verrouillee && " · salle d'un lieu"}
+                    </span>
+                  </span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => onActions(p)}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center self-center rounded-full text-xl text-encre-doux ring-1 ring-or-clair/60"
+                  aria-label={`Actions pour ${p.nom}`}
+                >
+                  ⋯
+                </button>
+              </Carte>
+            </li>
+          );
+        })}
+      </ul>
+  );
+}
+
+function NouveauPlan({ modele, onCree }: { modele: boolean; onCree: (p: Plan) => void }) {
   const [nom, setNom] = useState("");
-  const [depart, setDepart] = useState<"exemple" | "vide">("exemple");
+  const [depart, setDepart] = useState<"exemple" | "vide">(modele ? "vide" : "exemple");
   const [largeur, setLargeur] = useState("20");
   const [longueur, setLongueur] = useState("14");
   const [enCours, setEnCours] = useState(false);
@@ -182,15 +204,15 @@ function NouveauPlan({ onCree }: { onCree: (p: Plan) => void }) {
           const n = nom.trim() || "Mon plan";
           const l = parseFloat(largeur.replace(",", "."));
           const L = parseFloat(longueur.replace(",", "."));
-          onCree(await creerPlan(n, depart === "vide" ? planVide(n, l > 0 ? l : 20, L > 0 ? L : 14) : "exemple"));
+          onCree(await creerPlan(n, depart === "vide" ? planVide(n, l > 0 ? l : 20, L > 0 ? L : 14) : "exemple", modele ? { est_modele: true } : {}));
         } catch (err) {
           setErreur(messageErreur(err as Error));
           setEnCours(false);
         }
       }}
     >
-      <Champ id="nomPlan" libelle="Nom du plan" placeholder="Mariage de Camille & Julien – Orangerie" value={nom} onChange={(e) => setNom(e.target.value)} autoComplete="off" />
-      <Choix<"exemple" | "vide">
+      <Champ id="nomPlan" libelle={modele ? "Nom de la salle" : "Nom du plan"} placeholder={modele ? "L'Orangerie" : "Mariage de Camille & Julien – Orangerie"} value={nom} onChange={(e) => setNom(e.target.value)} autoComplete="off" />
+      {!modele && <Choix<"exemple" | "vide">
         libelle="Pour commencer"
         valeur={depart}
         onChange={setDepart}
@@ -198,7 +220,7 @@ function NouveauPlan({ onCree }: { onCree: (p: Plan) => void }) {
           { valeur: "exemple", texte: "Avec un exemple" },
           { valeur: "vide", texte: "Salle vide" },
         ]}
-      />
+      />}
       {depart === "vide" && (
         <div className="grid grid-cols-2 gap-3">
           <Champ id="largeur" libelle="Largeur (m)" inputMode="decimal" value={largeur} onChange={(e) => setLargeur(e.target.value)} />

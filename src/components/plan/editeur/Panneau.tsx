@@ -37,7 +37,9 @@ export function Panneau({
   onImporterInvites,
   commentaires,
   actionsCommentaires,
+  modeModele = false,
 }: {
+  modeModele?: boolean;
   commentaires: Commentaire[];
   actionsCommentaires: ActionsCommentaires | null;
   contenu: PlanContenu;
@@ -59,7 +61,7 @@ export function Panneau({
   }
   return (
     <>
-      <Reglages contenu={contenu} e={selection} alertes={alertes} lectureSeule={lectureSeule} modifier={modifier} onChoisir={onChoisir} />
+      <Reglages contenu={contenu} e={selection} alertes={alertes} lectureSeule={lectureSeule} modifier={modifier} onChoisir={onChoisir} modeModele={modeModele} />
       {actionsCommentaires && (
         <div className="mt-3">
           <ListeCommentaires commentaires={commentaires} elementId={selection.id} actions={actionsCommentaires} />
@@ -170,11 +172,13 @@ function Accueil({
 }
 
 function Reglages({
-  contenu, e, alertes, lectureSeule, modifier, onChoisir,
+  contenu, e, alertes, lectureSeule, modifier, onChoisir, modeModele,
 }: {
   contenu: PlanContenu; e: Element; alertes: Alerte[]; lectureSeule: boolean; modifier: Modifier; onChoisir: (id: string | null) => void;
+  modeModele: boolean;
 }) {
-  const fige = lectureSeule || !!e.verrou;
+  // Élément fixé par le lieu : modifiable seulement dans la salle modèle elle-même
+  const fige = lectureSeule || (!!e.verrou && !modeModele);
   const maj = (champs: Partial<Element>, cle?: string) => modifier((c) => majElement(c, e.id, champs), cle ? `${e.id}:${cle}` : undefined);
   const mesAlertes = alertes.filter((a) => a.ids.includes(e.id));
   const num = (libelle: string, champ: string, pas: number, min: number, max: number, unite?: string) => (
@@ -261,7 +265,21 @@ function Reglages({
           ×
         </button>
       </div>
-      {e.verrou && <p className="rounded-xl bg-or/15 px-3 py-2 text-xs text-or-fonce">🔒 Élément fixé par le lieu de réception : il ne peut pas être modifié.</p>}
+      {e.verrou && !modeModele && <p className="rounded-xl bg-or/15 px-3 py-2 text-xs text-or-fonce">🔒 Élément fixé par le lieu de réception : il ne peut pas être modifié.</p>}
+      {modeModele && !lectureSeule && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-creme p-3">
+          <input
+            type="checkbox"
+            checked={!!e.verrou}
+            onChange={(ev) => maj({ verrou: ev.target.checked })}
+            className="mt-0.5 h-5 w-5 shrink-0 accent-[#A07E5E]"
+          />
+          <span className="text-sm">
+            <span className="block font-medium">🔒 Fixe pour les couples</span>
+            <span className="block text-xs text-encre-doux">Les couples ne pourront ni le déplacer, ni le modifier, ni le supprimer.</span>
+          </span>
+        </label>
+      )}
       <input
         value={e.name}
         disabled={fige}

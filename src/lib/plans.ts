@@ -8,7 +8,7 @@ import { estPlanValide } from "@/plan/moteur";
 import { normaliser } from "@/plan/normaliser";
 import type { Plan, PlanContenu, TypeCompte } from "@/plan/types";
 
-const CHAMPS = "id, proprietaire_id, nom, contenu, version, archive, updated_at, created_at";
+const CHAMPS = "id, proprietaire_id, nom, contenu, version, archive, est_modele, modele_id, structure_verrouillee, updated_at, created_at";
 
 function verifier<T>(res: { data: T | null; error: unknown }): T {
   if (res.error) throw res.error;
@@ -122,10 +122,18 @@ export async function nommerVersion(planId: string, version: number, contenu: Pl
   );
 }
 
-export async function creerPlan(nom: string, depart: "exemple" | "vide" | PlanContenu = "exemple"): Promise<Plan> {
+export async function creerPlan(
+  nom: string,
+  depart: "exemple" | "vide" | PlanContenu = "exemple",
+  options: { est_modele?: boolean; modele_id?: string | null; structure_verrouillee?: boolean } = {},
+): Promise<Plan> {
   const contenu = depart === "exemple" ? planExemple(nom) : depart === "vide" ? planVide(nom) : { ...depart, name: nom };
+  // Une salle modèle part de la salle seule : les éléments de structure sont fixes d'office
+  if (options.est_modele) {
+    contenu.items = contenu.items.filter((e) => !["round", "rect"].includes(e.type)).map((e) => ({ ...e, verrou: true }));
+  }
   return verifier<Plan>(
-    await supabaseNavigateur().from("plans").insert({ nom: nom.trim(), contenu }).select(CHAMPS).single(),
+    await supabaseNavigateur().from("plans").insert({ nom: nom.trim(), contenu, ...options }).select(CHAMPS).single(),
   );
 }
 
@@ -139,7 +147,27 @@ export async function renommerPlan(planId: string, nom: string, contenu: PlanCon
 }
 
 export async function dupliquerPlan(plan: Plan): Promise<Plan> {
-  return creerPlan(`${plan.nom} (copie)`, plan.contenu);
+  return creerPlan(`${plan.nom} (copie)`, plan.contenu, {
+    est_modele: plan.est_modele,
+    modele_id: plan.modele_id ?? null,
+    structure_verrouillee: plan.structure_verrouillee,
+  });
+}
+
+// ---------- Salles modèles ----------
+export async function creerDepuisModele(jeton: string, nom: string, partagerLieu: boolean): Promise<string> {
+  return verifier<string>(
+    await supabaseNavigateur().rpc("creer_plan_depuis_modele", { p_jeton: jeton, p_nom: nom, p_partager_lieu: partagerLieu }),
+  );
+}
+
+export async function infoModele(planId: string): Promise<{ nom: string; lieu: string | null; modifie_le: string } | null> {
+  const { data, error } = await supabaseNavigateur().rpc("info_modele", { p_plan: planId });
+  return error ? null : data;
+}
+
+export async function mettreAJourStructure(planId: string): Promise<number> {
+  return verifier<number>(await supabaseNavigateur().rpc("mettre_a_jour_structure", { p_plan: planId }));
 }
 
 export async function archiverPlan(planId: string, archive: boolean) {

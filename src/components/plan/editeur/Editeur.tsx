@@ -8,7 +8,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Feuille } from "@/components/ui/Feuille";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
-import { enregistrerContenu, lirePlan, lireProfil } from "@/lib/plans";
+import { enregistrerContenu, infoModele, lirePlan, lireProfil, mettreAJourStructure } from "@/lib/plans";
 import {
   ajouterCommentaire,
   listerCommentaires,
@@ -37,6 +37,13 @@ const brouillon = (id: string) => `macoordo:plan-brouillon:${id}`;
 
 export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; texte: string } }) {
   const lectureSeule = plan.role === "lecteur";
+  // Salle modèle d'un lieu (on y choisit les éléments fixes), ou plan d'un couple créé à partir d'elle
+  const modeModele = !!plan.est_modele;
+  const structureFixe = !!plan.structure_verrouillee;
+  const [salleLieu, setSalleLieu] = useState<{ nom: string; lieu: string | null } | null>(null);
+  useEffect(() => {
+    if (structureFixe) infoModele(plan.id).then(setSalleLieu);
+  }, [plan.id, structureFixe]);
   const h = useHistorique(plan.contenu);
   const { contenu, modifier, apercu, valider, remplacer } = h;
   const [selection, setSelection] = useState<string | null>(null);
@@ -237,6 +244,8 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
   function ajouter(type: TypeElement) {
     const c = canevas.current?.centre() ?? { x: contenu.room.w / 2, y: contenu.room.h / 2 };
     const e = nouvelElement(contenu, type, c.x, c.y);
+    // Dans une salle modèle, la structure (poteaux, portes, fenêtres, estrade) est fixe d'office
+    if (modeModele && ["pillar", "porte", "fenetre", "estrade"].includes(type)) e.verrou = true;
     modifier((x) => ({ ...x, items: [...x.items, e] }));
     setSelection(e.id);
   }
@@ -295,6 +304,17 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
         </button>
       </header>
 
+      {modeModele && (
+        <p className="bg-or/15 px-3 py-1.5 text-xs text-or-fonce">
+          🏛️ Salle modèle : les éléments 🔒 seront fixes pour les couples. Envoyez-leur le lien depuis 👥.
+        </p>
+      )}
+      {structureFixe && (
+        <p className="bg-or/15 px-3 py-1.5 text-xs text-or-fonce">
+          🏛️ Salle fournie par {salleLieu?.lieu || "le lieu de réception"} : la forme de la salle et les éléments 🔒 sont fixes.
+        </p>
+      )}
+
       {modifiePar && maintenant - modifiePar.quand < 30_000 ? (
         <p className="bg-or/15 px-3 py-2 text-sm text-or-fonce" role="status">
           ✏️ <strong className="font-medium">{modifiePar.nom}</strong> modifie le plan en ce moment : attendez la fin de ses modifications pour éviter un conflit.
@@ -336,7 +356,7 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
           contenu={contenu}
           enDefaut={enDefaut}
           selection={selection}
-          peutDeplacer={(e) => !lectureSeule && !e.verrou}
+          peutDeplacer={(e) => !lectureSeule && (modeModele || !e.verrou)}
           onChoisir={setSelection}
           onDebutDeplacement={() => {
             avantGeste.current = contenuRef.current;
@@ -369,6 +389,7 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
           onImporterInvites={() => setFenetre("import")}
           commentaires={commentaires}
           actionsCommentaires={actionsCommentaires}
+          modeModele={modeModele}
         />
       </section>
 
@@ -394,6 +415,25 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
           <a href={`/plans/${plan.id}/imprimer`} className="flex min-h-[52px] items-center rounded-2xl bg-blanc px-4 ring-1 ring-or-clair/60">
             🖨️ Version imprimable / PDF
           </a>
+          {!lectureSeule && structureFixe && (
+            <button
+              type="button"
+              onClick={async () => {
+                fermer();
+                // Enregistre d'abord nos modifications, puis récupère la salle du lieu
+                await enregistrer();
+                try {
+                  await mettreAJourStructure(plan.id);
+                  await recharger();
+                } catch {
+                  setEtat("erreur");
+                }
+              }}
+              className="min-h-[52px] rounded-2xl bg-blanc px-4 text-left ring-1 ring-or-clair/60"
+            >
+              🔄 Mettre à jour la salle depuis celle du lieu (vos tables sont gardées)
+            </button>
+          )}
           {!lectureSeule && (
             <button
               type="button"
@@ -409,10 +449,10 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
         </div>
       </Feuille>
       <Feuille titre="Partager le plan" ouverte={fenetre === "partage"} onFermer={fermer}>
-        {fenetre === "partage" && <FenetrePartage planId={plan.id} nomPlan={plan.nom} gestionnaire={plan.role === "proprietaire"} />}
+        {fenetre === "partage" && <FenetrePartage planId={plan.id} nomPlan={plan.nom} gestionnaire={plan.role === "proprietaire"} modele={modeModele} />}
       </Feuille>
       <Feuille titre="La salle" ouverte={fenetre === "salle"} onFermer={fermer}>
-        {fenetre === "salle" && <FenetreSalle contenu={contenu} modifier={modifier} onFini={fermer} />}
+        {fenetre === "salle" && <FenetreSalle contenu={contenu} modifier={modifier} onFini={fermer} structureFixe={structureFixe} />}
       </Feuille>
       <Feuille titre="Récapitulatif" ouverte={fenetre === "recap"} onFermer={fermer}>
         {fenetre === "recap" && <FenetreRecap contenu={contenu} planId={plan.id} />}
