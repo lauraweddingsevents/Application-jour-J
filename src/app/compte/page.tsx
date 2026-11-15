@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Compte } from "./Compte";
+import { MonCompte } from "./MonCompte";
 
-export const metadata: Metadata = { title: "Mon compte" };
+export const metadata: Metadata = { title: "Mon compte", robots: { index: false } };
 
 export default function Page() {
-  return <Compte />;
+  return <MonCompte />;
 }

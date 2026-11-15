@@ -31,10 +31,6 @@ export function EnTete({ retour }: { retour?: { href: string; texte: string } })
           <Logo />
         </Link>
       )}
-      <span className="flex items-center">
-      <Link href="/compte" className="min-h-[44px] px-2 pt-3 text-sm text-encre-doux underline-offset-4 hover:underline">
-        Mon compte
-      </Link>
       <button
         type="button"
         onClick={seDeconnecter}
@@ -42,7 +38,6 @@ export function EnTete({ retour }: { retour?: { href: string; texte: string } })
       >
         Se déconnecter
       </button>
-      </span>
     </header>
     </>
   );

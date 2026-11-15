@@ -16,6 +16,8 @@ import { Deroule } from "./Deroule";
 import { Fiche } from "./Fiche";
 import { Intervenants } from "./Intervenants";
 import { Reglages } from "./Reglages";
+import { useDroits } from "@/lib/droits";
+import { BandeauLectureSeule } from "@/components/BandeauLectureSeule";
 
 const ONGLETS = [
   { id: "deroule", texte: "Déroulé" },
@@ -47,6 +49,7 @@ function Contenu() {
   }, []);
 
   const enLigne = useEnLigne();
+  const droits = useDroits();
   const [feuilleAnnonce, setFeuilleAnnonce] = useState(false);
   const [annonces, setAnnonces] = useState<Annonce[]>([]);
   const fermerAnnonce = useCallback(() => setFeuilleAnnonce(false), []);
@@ -108,6 +111,8 @@ function Contenu() {
           </Link>
         </div>
       </div>
+
+      <BandeauLectureSeule droits={droits} />
 
       <nav
         className="sticky top-0 z-10 -mx-4 mt-6 overflow-x-auto bg-creme/95 px-4 py-2 backdrop-blur"

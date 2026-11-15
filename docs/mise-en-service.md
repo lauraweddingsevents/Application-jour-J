@@ -32,6 +32,16 @@ Remplacer Gmail par un service d'envoi professionnel, par exemple Resend
 arrivée en boîte de réception. Configuration dans Supabase → Authentication →
 Emails → SMTP Settings.
 
+## Abonnement et administration (communs avec Ma Visite Technique)
+1. Prérequis : le script `0001_comptes_abonnement.sql` de Ma Visite Technique a été
+   exécuté sur ce projet Supabase (fait en novembre 2026).
+2. Supabase → SQL Editor : exécuter `supabase/migrations/0006_abonnement_lecture_seule.sql`.
+3. L'administratrice (colonne `est_admin` du profil) voit « ⚙ Administration des comptes »
+   sur « Mes mariages ».
+4. Activer le paiement : voir `docs/mise-en-service.md` du dépôt Ma Visite Technique
+   (mêmes variables Stripe à ajouter aussi dans ce projet Vercel :
+   `SUPABASE_SECRET_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_WEBHOOK_SECRET`).
+
 ## Quand Ma Coordo deviendra payant
 - Vercel Hobby est réservé à un usage non commercial : passer à Vercel Pro
   (environ 20 $/mois) avant de facturer.

@@ -1,5 +1,6 @@
 -- =====================================================================
 -- Mon plan de salle — étape 1 : types de compte et plans enregistrés en ligne
+-- (indépendant du script 0006 « abonnement », dans n'importe quel ordre)
 -- À coller dans Supabase : SQL Editor > New query > Run
 -- (n'enlève ni ne modifie rien de Ma Coordo : uniquement des ajouts)
 -- =====================================================================
