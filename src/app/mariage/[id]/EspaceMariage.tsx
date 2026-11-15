@@ -16,6 +16,7 @@ import { Deroule } from "./Deroule";
 import { Fiche } from "./Fiche";
 import { Intervenants } from "./Intervenants";
 import { Reglages } from "./Reglages";
+import { PlanDeSalle } from "./PlanDeSalle";
 import { useDroits } from "@/lib/droits";
 import { BandeauLectureSeule } from "@/components/BandeauLectureSeule";
 
@@ -23,6 +24,7 @@ const ONGLETS = [
   { id: "deroule", texte: "Déroulé" },
   { id: "intervenants", texte: "Intervenants" },
   { id: "fiche", texte: "Fiche pratique" },
+  { id: "plan", texte: "Plan de salle" },
   { id: "reglages", texte: "Réglages" },
 ] as const;
 type Onglet = (typeof ONGLETS)[number]["id"];
@@ -152,6 +154,7 @@ function Contenu() {
         {onglet === "reglages" && <Reglages mariage={mariage} onModifie={setMariage} />}
         {onglet === "deroule" && <Deroule mariage={mariage} />}
         {onglet === "fiche" && <Fiche mariage={mariage} />}
+        {onglet === "plan" && <PlanDeSalle mariage={mariage} />}
       </div>
     </main>
   );

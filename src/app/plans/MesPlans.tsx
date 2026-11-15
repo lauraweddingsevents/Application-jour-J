@@ -23,6 +23,7 @@ import {
 } from "@/lib/plans";
 import { ilYa } from "@/lib/temps";
 import { accepterInvitations } from "@/lib/partagePlans";
+import { demandesRecues, repondreDemande, type DemandeRecue } from "@/lib/plans";
 import { planVide } from "@/plan/exemple";
 import { pluriel, resume } from "@/plan/moteur";
 import type { Plan } from "@/plan/types";
@@ -50,7 +51,9 @@ function Contenu() {
     router.push(`/plans/${id}`);
   };
 
+  const [demandes, setDemandes] = useState<DemandeRecue[]>([]);
   const charger = useCallback(() => {
+    demandesRecues().then(setDemandes);
     // Invitations reçues à mon adresse : acceptées avant d'afficher la liste
     accepterInvitations()
       .catch(() => 0)
@@ -75,6 +78,10 @@ function Contenu() {
           <span aria-hidden className="text-xl leading-none">+</span> Nouveau plan
         </Bouton>
       </div>
+
+      {demandes.map((d) => (
+        <DemandeRattachement key={d.id} demande={d} onRepondu={charger} />
+      ))}
 
       {erreur && <p className="mt-6 text-alerte">{erreur}</p>}
       {plans === null && !erreur && <p className="mt-10 text-center text-encre-doux">Chargement…</p>}
@@ -167,6 +174,7 @@ function ListePlans({ plans, onActions }: { plans: Plan[]; onActions: (p: Plan) 
                       Modifié {ilYa(p.updated_at)}
                       {p.role && p.role !== "proprietaire" && ` · partagé avec vous (${p.role === "editeur" ? "modification" : "lecture"})`}
                       {p.structure_verrouillee && " · salle d'un lieu"}
+                      {p.mariage_id && " · relié à Ma Coordo"}
                     </span>
                   </span>
                 </Link>
@@ -186,8 +194,41 @@ function ListePlans({ plans, onActions }: { plans: Plan[]; onActions: (p: Plan) 
   );
 }
 
-function NouveauPlan({ modele, onCree }: { modele: boolean; onCree: (p: Plan) => void }) {
-  const [nom, setNom] = useState("");
+function DemandeRattachement({ demande, onRepondu }: { demande: DemandeRecue; onRepondu: () => void }) {
+  const [enCours, setEnCours] = useState(false);
+  const [erreur, setErreur] = useState("");
+  async function repondre(accepter: boolean) {
+    setEnCours(true);
+    try {
+      await repondreDemande(demande.id, accepter);
+      onRepondu();
+    } catch (e) {
+      setErreur(messageErreur(e as Error));
+      setEnCours(false);
+    }
+  }
+  return (
+    <Carte className="mt-6 ring-2 ring-or">
+      <p className="text-sm font-medium text-or-fonce">📋 Demande de votre wedding planner</p>
+      <p className="mt-1">
+        <strong>{demande.demandeur_nom ?? "Votre wedding planner"}</strong> souhaite relier votre plan
+        « {demande.plan_nom} » à l&apos;organisation du mariage <strong>{demande.mariage_nom}</strong>.
+      </p>
+      <p className="mt-1 text-sm text-encre-doux">
+        Si vous acceptez, cette personne pourra voir et modifier le plan, et le transmettre à vos prestataires le jour J.
+        Vous gardez tous vos droits sur votre plan.
+      </p>
+      {erreur && <p className="mt-2 text-sm text-alerte">{erreur}</p>}
+      <div className="mt-3 flex gap-2">
+        <Bouton className="flex-1" disabled={enCours} onClick={() => repondre(true)}>Accepter</Bouton>
+        <Bouton className="flex-1" variante="secondaire" disabled={enCours} onClick={() => repondre(false)}>Refuser</Bouton>
+      </div>
+    </Carte>
+  );
+}
+
+export function NouveauPlan({ modele, onCree, nomInitial = "", texteBouton = "Créer le plan" }: { modele: boolean; onCree: (p: Plan) => void | Promise<void>; nomInitial?: string; texteBouton?: string }) {
+  const [nom, setNom] = useState(nomInitial);
   const [depart, setDepart] = useState<"exemple" | "vide">(modele ? "vide" : "exemple");
   const [largeur, setLargeur] = useState("20");
   const [longueur, setLongueur] = useState("14");
@@ -204,7 +245,7 @@ function NouveauPlan({ modele, onCree }: { modele: boolean; onCree: (p: Plan) =>
           const n = nom.trim() || "Mon plan";
           const l = parseFloat(largeur.replace(",", "."));
           const L = parseFloat(longueur.replace(",", "."));
-          onCree(await creerPlan(n, depart === "vide" ? planVide(n, l > 0 ? l : 20, L > 0 ? L : 14) : "exemple", modele ? { est_modele: true } : {}));
+          await onCree(await creerPlan(n, depart === "vide" ? planVide(n, l > 0 ? l : 20, L > 0 ? L : 14) : "exemple", modele ? { est_modele: true } : {}));
         } catch (err) {
           setErreur(messageErreur(err as Error));
           setEnCours(false);
@@ -228,7 +269,7 @@ function NouveauPlan({ modele, onCree }: { modele: boolean; onCree: (p: Plan) =>
         </div>
       )}
       {erreur && <p className="text-sm text-alerte">{erreur}</p>}
-      <Bouton type="submit" disabled={enCours}>{enCours ? "Création…" : "Créer le plan"}</Bouton>
+      <Bouton type="submit" disabled={enCours}>{enCours ? "Création…" : texteBouton}</Bouton>
     </form>
   );
 }

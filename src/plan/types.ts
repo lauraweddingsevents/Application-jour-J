@@ -93,6 +93,7 @@ export type Plan = {
   est_modele?: boolean; // salle modèle d'un lieu de réception
   modele_id?: string | null; // plan créé à partir d'une salle modèle
   structure_verrouillee?: boolean; // forme de la salle et éléments fixes non modifiables
+  mariage_id?: string | null; // relié à un mariage de Ma Coordo
   updated_at: string;
   created_at: string;
   role?: "proprietaire" | "editeur" | "lecteur";

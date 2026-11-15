@@ -35,7 +35,7 @@ type EtatEnregistrement = "enregistre" | "en-attente" | "en-cours" | "hors-ligne
 
 const brouillon = (id: string) => `macoordo:plan-brouillon:${id}`;
 
-export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; texte: string } }) {
+export function Editeur({ plan, retour, partageInitial = false }: { plan: Plan; retour: { href: string; texte: string }; partageInitial?: boolean }) {
   const lectureSeule = plan.role === "lecteur";
   // Salle modèle d'un lieu (on y choisit les éléments fixes), ou plan d'un couple créé à partir d'elle
   const modeModele = !!plan.est_modele;
@@ -47,7 +47,7 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
   const h = useHistorique(plan.contenu);
   const { contenu, modifier, apercu, valider, remplacer } = h;
   const [selection, setSelection] = useState<string | null>(null);
-  const [fenetre, setFenetre] = useState<Fenetre>(null);
+  const [fenetre, setFenetre] = useState<Fenetre>(partageInitial ? "partage" : null);
   const [etat, setEtat] = useState<EtatEnregistrement>("enregistre");
   const version = useRef(plan.version);
   const avantGeste = useRef<PlanContenu | null>(null);

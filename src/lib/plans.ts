@@ -8,7 +8,7 @@ import { estPlanValide } from "@/plan/moteur";
 import { normaliser } from "@/plan/normaliser";
 import type { Plan, PlanContenu, TypeCompte } from "@/plan/types";
 
-const CHAMPS = "id, proprietaire_id, nom, contenu, version, archive, est_modele, modele_id, structure_verrouillee, updated_at, created_at";
+const CHAMPS = "id, proprietaire_id, nom, contenu, version, archive, est_modele, modele_id, structure_verrouillee, mariage_id, updated_at, created_at";
 
 function verifier<T>(res: { data: T | null; error: unknown }): T {
   if (res.error) throw res.error;
@@ -168,6 +168,64 @@ export async function infoModele(planId: string): Promise<{ nom: string; lieu: s
 
 export async function mettreAJourStructure(planId: string): Promise<number> {
   return verifier<number>(await supabaseNavigateur().rpc("mettre_a_jour_structure", { p_plan: planId }));
+}
+
+// ---------- Plans reliés aux mariages (Ma Coordo) ----------
+export async function plansDuMariage(mariageId: string): Promise<Plan[]> {
+  const id = await moi();
+  return avecMemoire(`plans-mariage:${mariageId}`, async () => {
+    const plans = verifier<Plan[]>(
+      await supabaseNavigateur().from("plans").select(CHAMPS).eq("mariage_id", mariageId).order("created_at"),
+    );
+    const roles = verifier<{ plan_id: string; role: Plan["role"] }[]>(
+      await supabaseNavigateur().from("plans_membres").select("plan_id, role").eq("user_id", id!),
+    );
+    const parPlan = new Map(roles.map((r) => [r.plan_id, r.role]));
+    return plans.map((p) => ({ ...p, contenu: normaliser(p.contenu), role: parPlan.get(p.id) }));
+  });
+}
+
+/** Relie un plan à un mariage : « rattache » tout de suite, ou « en_attente » de l'accord du propriétaire */
+export async function demanderRattachement(mariageId: string, source: { plan: string } | { jeton: string }) {
+  return verifier<"rattache" | "en_attente">(
+    await supabaseNavigateur().rpc("demander_rattachement", {
+      p_mariage: mariageId,
+      p_plan: "plan" in source ? source.plan : null,
+      p_jeton: "jeton" in source ? source.jeton : null,
+    }),
+  );
+}
+
+export type DemandeEnvoyee = { id: string; plan_nom: string; statut: "en_attente" | "refusee"; created_at: string };
+export async function mesDemandes(mariageId: string): Promise<DemandeEnvoyee[]> {
+  const { data, error } = await supabaseNavigateur().rpc("mes_demandes_rattachement", { p_mariage: mariageId });
+  return error ? [] : (data as DemandeEnvoyee[]);
+}
+
+export async function annulerDemande(demandeId: string) {
+  verifier(await supabaseNavigateur().rpc("annuler_rattachement", { p_demande: demandeId }));
+}
+
+export type DemandeRecue = {
+  id: string;
+  plan_id: string;
+  plan_nom: string;
+  mariage_nom: string;
+  date_mariage: string;
+  demandeur_nom: string | null;
+  created_at: string;
+};
+export async function demandesRecues(): Promise<DemandeRecue[]> {
+  const { data, error } = await supabaseNavigateur().rpc("rattachements_a_valider");
+  return error ? [] : (data as DemandeRecue[]);
+}
+
+export async function repondreDemande(demandeId: string, accepter: boolean) {
+  verifier(await supabaseNavigateur().rpc("repondre_rattachement", { p_demande: demandeId, p_accepter: accepter }));
+}
+
+export async function detacherPlan(planId: string) {
+  verifier(await supabaseNavigateur().rpc("detacher_plan", { p_plan: planId }));
 }
 
 export async function archiverPlan(planId: string, archive: boolean) {

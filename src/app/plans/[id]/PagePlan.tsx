@@ -22,6 +22,18 @@ function Contenu() {
   const [plan, setPlan] = useState<Plan | null | undefined>(undefined);
   const [erreur, setErreur] = useState("");
 
+  // Ouvert depuis un mariage de Ma Coordo : le bouton retour y ramène
+  const [retour, setRetour] = useState({ href: "/plans", texte: "Mes plans" });
+  const [partage, setPartage] = useState(false);
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const depuis = q.get("depuis");
+    /* eslint-disable react-hooks/set-state-in-effect */
+    if (depuis && /^[0-9a-f-]{36}$/.test(depuis)) setRetour({ href: `/mariage/${depuis}?onglet=plan`, texte: "Retour au mariage" });
+    setPartage(q.get("partage") === "1");
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+
   useEffect(() => {
     lirePlan(id)
       .then(setPlan)
@@ -34,9 +46,9 @@ function Contenu() {
   if (plan === null)
     return (
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6">
-        <EnTetePlan retour={{ href: "/plans", texte: "Mes plans" }} />
+        <EnTetePlan retour={retour} />
         <p className="mt-10 text-center">Ce plan est introuvable, ou vous n&apos;y avez pas accès.</p>
       </main>
     );
-  return <Editeur plan={plan} retour={{ href: "/plans", texte: "Mes plans" }} />;
+  return <Editeur plan={plan} retour={retour} partageInitial={partage} />;
 }
