@@ -55,16 +55,17 @@ export function FenetrePartage({ planId, nomPlan, gestionnaire }: { planId: stri
     }
   }
 
-  // Ouvre la messagerie avec un message prêt à envoyer
-  function ouvrirMessagerie(adresse: string, r: Role) {
+  // Lien « mailto » : ouvre la messagerie avec un message prêt à envoyer
+  function lienMessagerie(adresse: string, r: Role) {
     const lien = `${window.location.origin}/plans`;
     const sujet = `Plan de salle « ${nomPlan} »`;
     const corps =
       `Bonjour,\n\nJe vous invite à ${r === "lecteur" ? "consulter" : "modifier"} le plan de salle « ${nomPlan} » sur Mon plan de salle.\n\n` +
       `Ouvrez ce lien et connectez-vous avec cette adresse e-mail (${adresse}) : ${lien}\n` +
       `Le plan apparaîtra directement dans « Mes plans ».\n\nÀ bientôt !`;
-    window.location.assign(`mailto:${adresse}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`);
+    return `mailto:${adresse}?subject=${encodeURIComponent(sujet)}&body=${encodeURIComponent(corps)}`;
   }
+  const [derniere, setDerniere] = useState<{ email: string; role: Role } | null>(null);
 
   return (
     <div className="flex flex-col gap-5">
@@ -116,9 +117,9 @@ export function FenetrePartage({ planId, nomPlan, gestionnaire }: { planId: stri
                 <span className="block truncate text-sm">{i.email}</span>
                 <span className="block text-xs text-encre-doux">Invitation en attente · {nomRole(i.role)}</span>
               </span>
-              <button type="button" onClick={() => ouvrirMessagerie(i.email, i.role)} className="min-h-[32px] text-xs text-or-fonce underline underline-offset-4">
+              <a href={lienMessagerie(i.email, i.role)} className="min-h-[32px] pt-2 text-xs text-or-fonce underline underline-offset-4">
                 Renvoyer
-              </button>
+              </a>
               <button type="button" onClick={() => agir(() => annulerInvitation(i.id))} aria-label={`Annuler l'invitation de ${i.email}`} className="h-8 w-8 shrink-0 rounded-full text-encre-doux">
                 ×
               </button>
@@ -139,8 +140,8 @@ export function FenetrePartage({ planId, nomPlan, gestionnaire }: { planId: stri
                 agir(async () => {
                   await inviter(planId, adresse, role);
                   setEmail("");
-                  ouvrirMessagerie(adresse, role);
-                }, "Invitation enregistrée : le plan apparaîtra dans ses plans dès qu'elle se connectera avec cette adresse.");
+                  setDerniere({ email: adresse, role });
+                }, "Invitation enregistrée : le plan apparaîtra dans ses plans dès que la personne se connectera avec cette adresse.");
               }}
             >
               <input
@@ -159,7 +160,16 @@ export function FenetrePartage({ planId, nomPlan, gestionnaire }: { planId: stri
               </select>
               <Bouton type="submit">Inviter</Bouton>
             </form>
-            <p className="mt-2 text-xs text-encre-doux">Votre messagerie s&apos;ouvre avec un message prêt à envoyer.</p>
+            {derniere ? (
+              <a
+                href={lienMessagerie(derniere.email, derniere.role)}
+                className="mt-2 flex min-h-[48px] items-center justify-center rounded-full bg-blanc px-4 text-sm font-medium ring-1 ring-or-clair"
+              >
+                ✉️ Envoyer le message d&apos;invitation à {derniere.email}
+              </a>
+            ) : (
+              <p className="mt-2 text-xs text-encre-doux">Ensuite, un bouton ouvre votre messagerie avec un message prêt à envoyer.</p>
+            )}
           </section>
 
           <section>

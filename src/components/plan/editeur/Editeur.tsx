@@ -38,7 +38,7 @@ const brouillon = (id: string) => `macoordo:plan-brouillon:${id}`;
 export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; texte: string } }) {
   const lectureSeule = plan.role === "lecteur";
   const h = useHistorique(plan.contenu);
-  const { contenu, modifier, apercu, valider } = h;
+  const { contenu, modifier, apercu, valider, remplacer } = h;
   const [selection, setSelection] = useState<string | null>(null);
   const [fenetre, setFenetre] = useState<Fenetre>(null);
   const [etat, setEtat] = useState<EtatEnregistrement>("enregistre");
@@ -188,14 +188,15 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
     if (!frais) return;
     version.current = frais.version;
     dernierEnregistre.current = frais.contenu;
-    h.remplacer(frais.contenu);
+    remplacer(frais.contenu);
     setEtat("enregistre");
-  }, [plan.id, h]);
+  }, [plan.id, remplacer]);
 
+  const idSession = session === undefined ? undefined : (session?.user.id ?? null);
   useEffect(() => {
-    if (session === undefined) return;
+    if (idSession === undefined) return;
     const supabase = supabaseNavigateur();
-    const cle = session?.user.id ?? Math.random().toString(36).slice(2);
+    const cle = idSession ?? Math.random().toString(36).slice(2);
     const canal = supabase
       .channel(`plan:${plan.id}`, { config: { presence: { key: cle } } })
       .on("broadcast", { event: "maj" }, ({ payload }) => {
@@ -218,14 +219,19 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
         );
       })
       .subscribe((statut) => {
-        if (statut === "SUBSCRIBED") canal.track({ nom: monNomRef.current || session?.user.email?.split("@")[0] || "Quelqu'un" });
+        if (statut === "SUBSCRIBED") canal.track({ nom: monNomRef.current || "Quelqu'un" });
       });
     canalRef.current = canal;
     return () => {
       canalRef.current = null;
       supabase.removeChannel(canal);
     };
-  }, [plan.id, recharger, chargerCommentaires, session]);
+  }, [plan.id, recharger, chargerCommentaires, idSession]);
+
+  // Mon nom connu après coup : on le transmet aux autres
+  useEffect(() => {
+    if (monNom) canalRef.current?.track({ nom: monNom });
+  }, [monNom]);
 
   // ---------- Actions ----------
   function ajouter(type: TypeElement) {

@@ -5,8 +5,20 @@ import { estAdressePlan } from "@/lib/marque";
 // la page d'accueil, la connexion et l'icône d'écran d'accueil sont celles
 // du plan de salle, et l'on ne tombe jamais sur Ma Coordo par erreur.
 export function proxy(requete: NextRequest) {
-  if (!estAdressePlan(requete.headers.get("host"))) return NextResponse.next();
+  const plan = estAdressePlan(requete.headers.get("host"));
   const url = requete.nextUrl.clone();
+
+  // Liens des e-mails de connexion / confirmation qui arrivent sur la page
+  // d'accueil (modèles d'e-mail communs à plusieurs applications) :
+  // on les envoie vers la page qui valide la connexion.
+  const p = url.searchParams;
+  if (url.pathname === "/" && (p.has("token_hash") || p.has("code") || p.has("error_description"))) {
+    url.pathname = "/auth/confirm";
+    if (!p.has("suite")) p.set("suite", plan ? "/plans" : "/tableau");
+    return NextResponse.redirect(url);
+  }
+
+  if (!plan) return NextResponse.next();
   switch (url.pathname) {
     case "/":
       url.pathname = "/plan-de-salle";
