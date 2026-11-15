@@ -2,6 +2,8 @@
 // Panneau du bas de l'éditeur : ajouter des éléments, ou régler l'élément choisi
 import { useState } from "react";
 import { ChampNombre } from "./ChampNombre";
+import { ListeCommentaires, type ActionsCommentaires } from "./Commentaires";
+import type { Commentaire } from "@/lib/partagePlans";
 import { ZONES_PRETES, dupliquer, majElement, majInvite, placerInvite, supprimer, supprimerInvite } from "@/plan/actions";
 import { uid } from "@/plan/exemple";
 import { estTable, places, pluriel, resume, texteMenus, type Alerte } from "@/plan/moteur";
@@ -33,7 +35,11 @@ export function Panneau({
   onChoisir,
   onAjouter,
   onImporterInvites,
+  commentaires,
+  actionsCommentaires,
 }: {
+  commentaires: Commentaire[];
+  actionsCommentaires: ActionsCommentaires | null;
   contenu: PlanContenu;
   selection: Element | null;
   alertes: Alerte[];
@@ -45,10 +51,43 @@ export function Panneau({
 }) {
   if (!selection) {
     return (
-      <Accueil contenu={contenu} alertes={alertes} lectureSeule={lectureSeule} modifier={modifier} onChoisir={onChoisir} onAjouter={onAjouter} onImporterInvites={onImporterInvites} />
+      <>
+        <Accueil contenu={contenu} alertes={alertes} lectureSeule={lectureSeule} modifier={modifier} onChoisir={onChoisir} onAjouter={onAjouter} onImporterInvites={onImporterInvites} />
+        <ARegler contenu={contenu} commentaires={commentaires} onChoisir={onChoisir} />
+      </>
     );
   }
-  return <Reglages contenu={contenu} e={selection} alertes={alertes} lectureSeule={lectureSeule} modifier={modifier} onChoisir={onChoisir} />;
+  return (
+    <>
+      <Reglages contenu={contenu} e={selection} alertes={alertes} lectureSeule={lectureSeule} modifier={modifier} onChoisir={onChoisir} />
+      {actionsCommentaires && (
+        <div className="mt-3">
+          <ListeCommentaires commentaires={commentaires} elementId={selection.id} actions={actionsCommentaires} />
+        </div>
+      )}
+    </>
+  );
+}
+
+// Commentaires pas encore réglés, tous éléments confondus
+function ARegler({ contenu, commentaires, onChoisir }: { contenu: PlanContenu; commentaires: Commentaire[]; onChoisir: (id: string | null) => void }) {
+  const ouverts = commentaires.filter((c) => !c.regle && c.element_id && contenu.items.some((e) => e.id === c.element_id));
+  if (!ouverts.length) return null;
+  return (
+    <div className="mt-4">
+      <p className="text-sm font-medium">💬 Commentaires à régler ({ouverts.length})</p>
+      <ul className="mt-2 flex flex-col gap-1">
+        {ouverts.map((c) => (
+          <li key={c.id}>
+            <button type="button" onClick={() => onChoisir(c.element_id)} className="w-full rounded-xl bg-creme px-3 py-2 text-left text-sm">
+              <span className="font-medium">{contenu.items.find((e) => e.id === c.element_id)?.name}</span> · {c.texte}
+              <span className="block text-xs text-encre-doux">{c.auteur_nom}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 function ListeAlertes({ alertes, onChoisir }: { alertes: Alerte[]; onChoisir?: (id: string) => void }) {

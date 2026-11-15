@@ -8,17 +8,29 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Feuille } from "@/components/ui/Feuille";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
-import { enregistrerContenu, lirePlan } from "@/lib/plans";
+import { enregistrerContenu, lirePlan, lireProfil } from "@/lib/plans";
+import {
+  ajouterCommentaire,
+  listerCommentaires,
+  reglerCommentaire,
+  supprimerCommentaire,
+  type Commentaire,
+} from "@/lib/partagePlans";
+import { useSession } from "@/lib/useSession";
+import { useMaintenant } from "@/lib/vue";
 import { estErreurReseau } from "@/lib/memoire";
 import { nouvelElement, majElement } from "@/plan/actions";
 import { alertes, numeroterTables } from "@/plan/moteur";
 import type { Plan, PlanContenu, TypeElement } from "@/plan/types";
 import { Canevas, type CanevasPoignee } from "./Canevas";
 import { FenetreHistorique, FenetreImage, FenetreImport, FenetreRecap, FenetreSalle } from "./Fenetres";
+import { FenetrePartage } from "./FenetrePartage";
+import type { ActionsCommentaires } from "./Commentaires";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { Panneau } from "./Panneau";
 import { useHistorique } from "./useHistorique";
 
-type Fenetre = "salle" | "recap" | "import" | "historique" | "image" | "menu" | null;
+type Fenetre = "salle" | "recap" | "import" | "historique" | "image" | "menu" | "partage" | null;
 type EtatEnregistrement = "enregistre" | "en-attente" | "en-cours" | "hors-ligne" | "conflit" | "erreur";
 
 const brouillon = (id: string) => `macoordo:plan-brouillon:${id}`;
@@ -39,9 +51,61 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
     contenuRef.current = contenu;
   }, [contenu]);
 
+  const session = useSession();
+  const monId = session?.user.id ?? null;
+  const [monNom, setMonNom] = useState("");
+  useEffect(() => {
+    lireProfil()
+      .then((p) => setMonNom(p?.nom || session?.user.email?.split("@")[0] || ""))
+      .catch(() => {});
+  }, [session?.user.email]);
+
+  // Commentaires
+  const [commentaires, setCommentaires] = useState<Commentaire[]>([]);
+  const chargerCommentaires = useCallback(() => {
+    listerCommentaires(plan.id).then(setCommentaires);
+  }, [plan.id]);
+  useEffect(chargerCommentaires, [chargerCommentaires]);
+  const pastilles = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const c of commentaires) if (!c.regle && c.element_id) m.set(c.element_id, (m.get(c.element_id) ?? 0) + 1);
+    return m;
+  }, [commentaires]);
+  const actionsCommentaires: ActionsCommentaires | null = monId
+    ? {
+        monId,
+        peutRegler: !lectureSeule,
+        ajouter: async (elementId, texte) => {
+          await ajouterCommentaire(plan.id, elementId, texte);
+          chargerCommentaires();
+        },
+        regler: async (id, regle) => {
+          await reglerCommentaire(id, regle);
+          chargerCommentaires();
+        },
+        supprimer: async (id) => {
+          await supprimerCommentaire(id);
+          chargerCommentaires();
+        },
+      }
+    : null;
+
+  // Présence : qui d'autre a ce plan ouvert, qui le modifie en ce moment
+  const [autres, setAutres] = useState<string[]>([]);
+  const [modifiePar, setModifiePar] = useState<{ nom: string; quand: number } | null>(null);
+  const canalRef = useRef<RealtimeChannel | null>(null);
+  const dernierSignal = useRef(0);
+  const maintenant = useMaintenant(5000);
+
   const { enDefaut, messages } = useMemo(() => alertes(contenu), [contenu]);
   const choisi = contenu.items.find((i) => i.id === selection) ?? null;
 
+  const monIdRef = useRef<string | null>(null);
+  const monNomRef = useRef("");
+  useEffect(() => {
+    monIdRef.current = monId;
+    monNomRef.current = monNom;
+  }, [monId, monNom]);
   const etatRef = useRef(etat);
   useEffect(() => {
     etatRef.current = etat;
@@ -72,6 +136,11 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
 
   useEffect(() => {
     if (lectureSeule || h.modifie === 0) return;
+    // Prévient les autres personnes qui ont le plan ouvert (au plus toutes les 10 s)
+    if (Date.now() - dernierSignal.current > 10_000 && canalRef.current) {
+      dernierSignal.current = Date.now();
+      canalRef.current.send({ type: "broadcast", event: "edition", payload: { id: monIdRef.current, nom: monNomRef.current } });
+    }
     // Une modification vient d'avoir lieu : enregistrement dans 1,5 s
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setEtat((e) => (e === "conflit" ? e : "en-attente"));
@@ -124,20 +193,39 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
   }, [plan.id, h]);
 
   useEffect(() => {
+    if (session === undefined) return;
     const supabase = supabaseNavigateur();
+    const cle = session?.user.id ?? Math.random().toString(36).slice(2);
     const canal = supabase
-      .channel(`plan:${plan.id}`)
+      .channel(`plan:${plan.id}`, { config: { presence: { key: cle } } })
       .on("broadcast", { event: "maj" }, ({ payload }) => {
         const v = (payload as { version?: number }).version ?? 0;
         if (v <= version.current) return; // c'est notre propre enregistrement
         // Rien en cours chez nous : on affiche la nouvelle version ; sinon conflit à la sauvegarde
         if (contenuRef.current === dernierEnregistre.current) recharger();
       })
-      .subscribe();
+      .on("broadcast", { event: "commentaire" }, () => chargerCommentaires())
+      .on("broadcast", { event: "edition" }, ({ payload }) => {
+        const p = payload as { id?: string; nom?: string };
+        if (p.id && p.id !== cle) setModifiePar({ nom: p.nom || "Quelqu'un", quand: Date.now() });
+      })
+      .on("presence", { event: "sync" }, () => {
+        const etat = canal.presenceState<{ nom: string }>();
+        setAutres(
+          Object.entries(etat)
+            .filter(([k]) => k !== cle)
+            .map(([, v]) => v[0]?.nom || "Quelqu'un"),
+        );
+      })
+      .subscribe((statut) => {
+        if (statut === "SUBSCRIBED") canal.track({ nom: monNomRef.current || session?.user.email?.split("@")[0] || "Quelqu'un" });
+      });
+    canalRef.current = canal;
     return () => {
+      canalRef.current = null;
       supabase.removeChannel(canal);
     };
-  }, [plan.id, recharger]);
+  }, [plan.id, recharger, chargerCommentaires, session]);
 
   // ---------- Actions ----------
   function ajouter(type: TypeElement) {
@@ -193,10 +281,25 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
             </button>
           </>
         )}
+        <button type="button" onClick={() => setFenetre("partage")} aria-label="Partager" className="flex h-10 w-10 items-center justify-center rounded-full text-lg ring-1 ring-or-clair">
+          👥
+        </button>
         <button type="button" onClick={() => setFenetre("menu")} aria-label="Plus d'actions" className="flex h-10 w-10 items-center justify-center rounded-full text-xl ring-1 ring-or-clair">
           ⋯
         </button>
       </header>
+
+      {modifiePar && maintenant - modifiePar.quand < 30_000 ? (
+        <p className="bg-or/15 px-3 py-2 text-sm text-or-fonce" role="status">
+          ✏️ <strong className="font-medium">{modifiePar.nom}</strong> modifie le plan en ce moment : attendez la fin de ses modifications pour éviter un conflit.
+        </p>
+      ) : (
+        autres.length > 0 && (
+          <p className="bg-creme-fonce/60 px-3 py-1.5 text-xs text-encre-doux" role="status">
+            👀 {autres.join(", ")} {autres.length > 1 ? "ont" : "a"} aussi ce plan ouvert.
+          </p>
+        )
+      )}
 
       {etat === "conflit" && (
         <div className="flex flex-wrap items-center gap-2 bg-alerte/10 px-3 py-2 text-sm text-alerte">
@@ -223,6 +326,7 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
       <main className="relative min-h-0 flex-1 bg-creme">
         <Canevas
           poignee={canevas}
+          pastilles={pastilles}
           contenu={contenu}
           enDefaut={enDefaut}
           selection={selection}
@@ -257,6 +361,8 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
           onChoisir={setSelection}
           onAjouter={ajouter}
           onImporterInvites={() => setFenetre("import")}
+          commentaires={commentaires}
+          actionsCommentaires={actionsCommentaires}
         />
       </section>
 
@@ -295,6 +401,9 @@ export function Editeur({ plan, retour }: { plan: Plan; retour: { href: string; 
             </button>
           )}
         </div>
+      </Feuille>
+      <Feuille titre="Partager le plan" ouverte={fenetre === "partage"} onFermer={fermer}>
+        {fenetre === "partage" && <FenetrePartage planId={plan.id} nomPlan={plan.nom} gestionnaire={plan.role === "proprietaire"} />}
       </Feuille>
       <Feuille titre="La salle" ouverte={fenetre === "salle"} onFermer={fermer}>
         {fenetre === "salle" && <FenetreSalle contenu={contenu} modifier={modifier} onFini={fermer} />}

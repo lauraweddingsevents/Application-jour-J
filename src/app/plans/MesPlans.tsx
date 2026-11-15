@@ -22,6 +22,7 @@ import {
   supprimerPlan,
 } from "@/lib/plans";
 import { ilYa } from "@/lib/temps";
+import { accepterInvitations } from "@/lib/partagePlans";
 import { planVide } from "@/plan/exemple";
 import { pluriel, resume } from "@/plan/moteur";
 import type { Plan } from "@/plan/types";
@@ -50,7 +51,10 @@ function Contenu() {
   };
 
   const charger = useCallback(() => {
-    listerPlans()
+    // Invitations reçues à mon adresse : acceptées avant d'afficher la liste
+    accepterInvitations()
+      .catch(() => 0)
+      .then(() => listerPlans())
       .then(setPlans)
       .catch((e) => setErreur(messageErreur(e)));
   }, []);

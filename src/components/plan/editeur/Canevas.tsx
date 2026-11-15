@@ -4,6 +4,7 @@
 // déplacer (pas de 5 cm). Repris du prototype.
 import { useCallback, useEffect, useImperativeHandle, useRef, useState, type Ref } from "react";
 import { DessinElement, DessinSalle, ordreAffichage } from "@/components/plan/DessinPlan";
+import { contour } from "@/plan/moteur";
 import type { Element, PlanContenu } from "@/plan/types";
 
 const PAS = 5; // les éléments se placent au multiple de 5 cm
@@ -23,7 +24,9 @@ export function Canevas({
   onDeplacer,
   onFinDeplacement,
   poignee,
+  pastilles,
 }: {
+  pastilles?: Map<string, number>; // nombre de commentaires à régler par élément
   contenu: PlanContenu;
   enDefaut: Set<string>;
   selection: string | null;
@@ -189,6 +192,23 @@ export function Canevas({
         {ordreAffichage(contenu.items).map((e) => (
           <DessinElement key={e.id} e={e} defaut={enDefaut.has(e.id)} selectionne={e.id === selection} />
         ))}
+        {pastilles &&
+          contenu.items
+            .filter((e) => pastilles.get(e.id))
+            .map((e) => {
+              const pts = contour(e);
+              const x = Math.max(...pts.map((p) => p[0]));
+              const y = Math.min(...pts.map((p) => p[1]));
+              const r = Math.max(22, vue.w / 60);
+              return (
+                <g key={`c-${e.id}`} data-id={e.id} style={{ pointerEvents: "none" }}>
+                  <circle cx={x} cy={y} r={r} fill="#a07e5e" stroke="#fffdf9" strokeWidth={r / 6} />
+                  <text x={x} y={y} fontSize={r} textAnchor="middle" dominantBaseline="central" fill="#fffdf9" fontWeight={600}>
+                    {pastilles.get(e.id)}
+                  </text>
+                </g>
+              );
+            })}
       </svg>
       <div className="absolute right-2.5 top-2.5 flex flex-col gap-1.5">
         {[
