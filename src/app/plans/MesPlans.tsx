@@ -23,7 +23,7 @@ import {
 } from "@/lib/plans";
 import { ilYa } from "@/lib/temps";
 import { planVide } from "@/plan/exemple";
-import { resume } from "@/plan/moteur";
+import { pluriel, resume } from "@/plan/moteur";
 import type { Plan } from "@/plan/types";
 
 export function MesPlans() {
@@ -43,6 +43,11 @@ function Contenu() {
   const [fenetre, setFenetre] = useState<Fenetre>(null);
   const [voirArchives, setVoirArchives] = useState(false);
   const fermer = useCallback(() => setFenetre(null), []);
+  // Ouvre un plan en refermant d'abord la fenêtre (sinon elle reste ouverte au retour)
+  const ouvrir = (id: string) => {
+    setFenetre(null);
+    router.push(`/plans/${id}`);
+  };
 
   const charger = useCallback(() => {
     listerPlans()
@@ -104,7 +109,8 @@ function Contenu() {
                   <span className="min-w-0 flex-1 py-1">
                     <span className="block truncate font-medium">{p.nom}</span>
                     <span className="block text-sm text-encre-doux">
-                      {r.tables} tables · {r.places} places{r.invites ? ` · ${r.invites} invités` : ""}
+                      {pluriel(r.tables, "table")} · {pluriel(r.places, "place")}
+                      {r.invites ? ` · ${pluriel(r.invites, "invité")}` : ""}
                     </span>
                     <span className="block text-xs text-encre-doux">
                       Modifié {ilYa(p.updated_at)}
@@ -133,10 +139,10 @@ function Contenu() {
       </p>
 
       <Feuille titre="Nouveau plan" ouverte={fenetre?.type === "nouveau"} onFermer={fermer}>
-        <NouveauPlan onCree={(p) => router.push(`/plans/${p.id}`)} />
+        <NouveauPlan onCree={(p) => ouvrir(p.id)} />
       </Feuille>
       <Feuille titre="Importer un plan" ouverte={fenetre?.type === "importer"} onFermer={fermer}>
-        <Importer onImporte={(p) => router.push(`/plans/${p.id}`)} />
+        <Importer onImporte={(p) => ouvrir(p.id)} />
       </Feuille>
       <Feuille titre={fenetre?.type === "actions" ? fenetre.plan.nom : ""} ouverte={fenetre?.type === "actions"} onFermer={fermer}>
         {fenetre?.type === "actions" && (
@@ -146,7 +152,7 @@ function Contenu() {
               fermer();
               charger();
             }}
-            onOuvrir={(id) => router.push(`/plans/${id}`)}
+            onOuvrir={ouvrir}
           />
         )}
       </Feuille>

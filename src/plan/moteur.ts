@@ -118,3 +118,6 @@ export function estPlanValide(o: unknown): o is PlanContenu {
   const p = o as PlanContenu;
   return !!p && typeof p === "object" && !!p.room && typeof p.room.w === "number" && typeof p.room.h === "number" && Array.isArray(p.items);
 }
+
+// « 1 table », « 5 tables »…
+export const pluriel = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;

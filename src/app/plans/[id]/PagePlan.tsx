@@ -8,7 +8,7 @@ import { EnTetePlan } from "@/components/plan/EnTetePlan";
 import { estIdentifiantInvalide, messageErreur } from "@/lib/erreurs";
 import { lirePlan } from "@/lib/plans";
 import { ilYa } from "@/lib/temps";
-import { alertes, resume } from "@/plan/moteur";
+import { alertes, pluriel, resume } from "@/plan/moteur";
 import type { Plan } from "@/plan/types";
 
 // Étape 1 : consultation du plan enregistré en ligne.
@@ -55,7 +55,7 @@ function Detail({ plan }: { plan: Plan }) {
       <h1 className="mt-6 text-2xl font-medium">{plan.nom}</h1>
       <p className="mt-1 text-sm text-encre-doux">
         {(plan.contenu.room.w / 100).toLocaleString("fr-FR")} × {(plan.contenu.room.h / 100).toLocaleString("fr-FR")} m ·{" "}
-        {r.tables} tables · {r.places} places · {r.invites} invités · enregistré {ilYa(plan.updated_at)}
+        {pluriel(r.tables, "table")} · {pluriel(r.places, "place")} · {pluriel(r.invites, "invité")} · enregistré {ilYa(plan.updated_at)}
       </p>
       <div className="mt-4 overflow-hidden rounded-carte bg-blanc p-2 ring-1 ring-or-clair/50">
         <DessinPlan plan={plan.contenu} enDefaut={enDefaut} className="h-auto w-full" />

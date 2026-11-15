@@ -35,7 +35,7 @@ export default function AccueilPlan() {
         </header>
 
         <div className="mt-8 overflow-hidden rounded-carte bg-blanc p-3 ring-1 ring-or-clair/50">
-          <DessinPlan plan={planExemple("Exemple")} className="h-auto w-full" />
+          <DessinPlan plan={planExemple("Exemple", true)} className="h-auto w-full" />
         </div>
 
         <div className="mt-8 flex flex-col gap-3">
