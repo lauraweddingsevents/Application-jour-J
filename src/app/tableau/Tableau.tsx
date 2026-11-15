@@ -10,6 +10,8 @@ import { Protege } from "@/components/Protege";
 import { FormulaireMariage } from "@/components/mariage/FormulaireMariage";
 import { creerMariage, listerMariages } from "@/lib/donnees";
 import { creerMariageDemo } from "@/lib/demo";
+import { peutModifier, useDroits } from "@/lib/droits";
+import { BandeauLectureSeule } from "@/components/BandeauLectureSeule";
 import { CLE_PUBLIQUE_ALERTES } from "@/lib/alertes";
 import { dateLongue, joursAvant, libelleCompteARebours } from "@/lib/dates";
 import { messageErreur } from "@/lib/erreurs";
@@ -29,6 +31,8 @@ function ListeMariages() {
   const [erreur, setErreur] = useState("");
   const [creation, setCreation] = useState(false);
   const [demoEnCours, setDemoEnCours] = useState(false);
+  const droits = useDroits();
+  const peutCreer = peutModifier(droits);
 
   async function lancerDemo() {
     setErreur("");
@@ -60,9 +64,13 @@ function ListeMariages() {
         <h1 className="text-2xl font-medium">Mes mariages</h1>
       </div>
 
-      <Bouton className="mt-6 w-full" onClick={() => setCreation(true)}>
-        <span aria-hidden className="text-xl leading-none">+</span> Nouveau mariage
-      </Bouton>
+      <BandeauLectureSeule droits={droits} />
+
+      {peutCreer && (
+        <Bouton className="mt-6 w-full" onClick={() => setCreation(true)}>
+          <span aria-hidden className="text-xl leading-none">+</span> Nouveau mariage
+        </Bouton>
+      )}
 
       {erreur && <p className="mt-6 text-alerte">{erreur}</p>}
       {mariages === null && !erreur && (
@@ -82,7 +90,7 @@ function ListeMariages() {
       {aVenir.length > 0 && <ListeCartes titre="À venir" mariages={aVenir} />}
       {passes.length > 0 && <ListeCartes titre="Passés" mariages={passes} discret />}
 
-      {mariages && (
+      {mariages && peutCreer && (
         <Carte className="mt-10 flex flex-col gap-3 bg-creme-fonce/40 text-center">
           <p className="text-sm text-encre-doux">
             Envie d&apos;essayer sans rien saisir ? Créez un mariage de
@@ -100,6 +108,18 @@ function ListeMariages() {
           {CLE_PUBLIQUE_ALERTES ? "⚙️ Réglages des alertes" : "🔔 Activer les alertes sur téléphone (à faire une fois)"}
         </Link>
       </p>
+      <p className="mt-3 text-center text-sm">
+        <Link href="/compte" className="text-or-fonce underline underline-offset-4">
+          👤 Mon compte et abonnement
+        </Link>
+      </p>
+      {droits?.est_admin && (
+        <p className="mt-3 text-center text-sm">
+          <Link href="/admin" className="text-or-fonce underline underline-offset-4">
+            ⚙ Administration des comptes
+          </Link>
+        </p>
+      )}
 
       <Feuille titre="Nouveau mariage" ouverte={creation} onFermer={fermer}>
         <FormulaireMariage

@@ -12,6 +12,8 @@ export function messageErreur(erreur: ErreurBrute): string {
     return "Ce lien ou ce code n'est plus valable. Demandez-en un nouveau.";
   if (code === "email_address_invalid" || (m.includes("email") && m.includes("invalid")))
     return "Cette adresse e-mail ne semble pas valide.";
+  if (m.includes('policy "abonnement'))
+    return "Votre compte est en lecture seule (abonnement inactif ou compte suspendu) : modification impossible. Voir « Mon compte ».";
   if (code === "42501" || m.includes("row-level security") || m.includes("permission denied"))
     return "Vous n'avez pas accès à cette information.";
   if (code === "23505")
