@@ -5,6 +5,7 @@ import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { avecMemoire } from "@/lib/memoire";
 import { planExemple, planVide } from "@/plan/exemple";
 import { estPlanValide } from "@/plan/moteur";
+import { normaliser } from "@/plan/normaliser";
 import type { Plan, PlanContenu, TypeCompte } from "@/plan/types";
 
 const CHAMPS = "id, proprietaire_id, nom, contenu, version, archive, updated_at, created_at";
@@ -50,13 +51,74 @@ export async function listerPlans(): Promise<Plan[]> {
       await supabaseNavigateur().from("plans_membres").select("plan_id, role").eq("user_id", id!),
     );
     const parPlan = new Map(roles.map((r) => [r.plan_id, r.role]));
-    return plans.map((p) => ({ ...p, role: parPlan.get(p.id) ?? (p.proprietaire_id === id ? "proprietaire" : undefined) }));
+    return plans.map((p) => ({
+      ...p,
+      contenu: normaliser(p.contenu),
+      role: parPlan.get(p.id) ?? (p.proprietaire_id === id ? "proprietaire" : undefined),
+    }));
   });
 }
 
 export async function lirePlan(planId: string): Promise<Plan | null> {
-  return avecMemoire(`plan:${planId}`, async () =>
-    verifier<Plan | null>(await supabaseNavigateur().from("plans").select(CHAMPS).eq("id", planId).maybeSingle()),
+  const id = await moi();
+  return avecMemoire(`plan:${planId}`, async () => {
+    const p = verifier<Plan | null>(await supabaseNavigateur().from("plans").select(CHAMPS).eq("id", planId).maybeSingle());
+    if (!p) return null;
+    const { data } = await supabaseNavigateur().from("plans_membres").select("role").eq("plan_id", planId).eq("user_id", id!).maybeSingle();
+    return { ...p, contenu: normaliser(p.contenu), role: (data?.role as Plan["role"]) ?? (p.proprietaire_id === id ? "proprietaire" : undefined) };
+  });
+}
+
+// Enregistre le contenu seulement si personne ne l'a modifié entre-temps
+// (« version » = celle sur laquelle on travaillait). Renvoie la nouvelle version,
+// ou null en cas de conflit.
+export async function enregistrerContenu(planId: string, contenu: PlanContenu, version: number): Promise<number | null> {
+  const res = await supabaseNavigateur()
+    .from("plans")
+    .update({ contenu })
+    .eq("id", planId)
+    .eq("version", version)
+    .select("version")
+    .maybeSingle();
+  if (res.error) throw res.error;
+  return res.data ? (res.data as { version: number }).version : null;
+}
+
+// ---------- Historique des versions ----------
+export type VersionPlan = {
+  id: string;
+  version: number;
+  libelle: string | null;
+  auteur_nom: string | null;
+  automatique: boolean;
+  created_at: string;
+};
+
+export async function listerVersions(planId: string): Promise<VersionPlan[]> {
+  const res = await supabaseNavigateur()
+    .from("plans_versions")
+    .select("id, version, libelle, auteur_nom, automatique, created_at")
+    .eq("plan_id", planId)
+    .order("created_at", { ascending: false })
+    .limit(80);
+  if (res.error) return [];
+  return res.data as VersionPlan[];
+}
+
+export async function lireVersion(versionId: string): Promise<PlanContenu> {
+  const v = verifier<{ contenu: PlanContenu }>(
+    await supabaseNavigateur().from("plans_versions").select("contenu").eq("id", versionId).single(),
+  );
+  return normaliser(v.contenu);
+}
+
+export async function nommerVersion(planId: string, version: number, contenu: PlanContenu, libelle: string) {
+  const id = await moi();
+  const profil = await lireProfil().catch(() => null);
+  verifier(
+    await supabaseNavigateur().from("plans_versions").insert({
+      plan_id: planId, version, contenu, libelle: libelle.trim(), auteur_id: id, auteur_nom: profil?.nom ?? null, automatique: false,
+    }),
   );
 }
 
@@ -97,5 +159,5 @@ export async function importerPlan(code: string): Promise<Plan> {
     throw new Error("code-invalide");
   }
   if (!estPlanValide(contenu)) throw new Error("code-invalide");
-  return creerPlan(contenu.name || "Plan importé", contenu);
+  return creerPlan(contenu.name || "Plan importé", normaliser(contenu));
 }

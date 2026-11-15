@@ -11,6 +11,7 @@ export function planExemple(nom: string, idFixes = false): PlanContenu {
     id: id(), type: "round", name: `Table ${n}`, x, y, rot: 0, d: 180, chairs: 10, guests: [],
   });
   return {
+    v: 2,
     name: nom,
     room: { w: 2000, h: 1400 },
     passage: 90,
@@ -19,9 +20,10 @@ export function planExemple(nom: string, idFixes = false): PlanContenu {
       { id: id(), type: "zone", name: "Piste de danse", x: 1000, y: 800, rot: 0, L: 500, W: 500, guests: [] },
       t(1, 330, 600), t(2, 330, 1050), t(3, 1670, 600), t(4, 1670, 1050),
     ],
+    nonPlaces: [],
   };
 }
 
 export function planVide(nom: string, largeurM = 20, longueurM = 14): PlanContenu {
-  return { name: nom, room: { w: Math.round(largeurM * 100), h: Math.round(longueurM * 100) }, passage: 90, items: [] };
+  return { v: 2, name: nom, room: { w: Math.round(largeurM * 100), h: Math.round(longueurM * 100) }, passage: 90, items: [], nonPlaces: [] };
 }
