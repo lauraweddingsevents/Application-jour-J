@@ -50,6 +50,13 @@ function Contenu() {
     if (ONGLETS.some((o) => o.id === demande)) setOnglet(demande as Onglet);
   }, []);
 
+  // L'onglet choisi reste visible dans la barre (qui défile sur téléphone)
+  useEffect(() => {
+    document
+      .querySelector('nav[aria-label="Sections du mariage"] [aria-current="page"]')
+      ?.scrollIntoView({ inline: "nearest", block: "nearest" });
+  }, [onglet, mariage]);
+
   const enLigne = useEnLigne();
   const droits = useDroits();
   const [feuilleAnnonce, setFeuilleAnnonce] = useState(false);
