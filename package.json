@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx src/lib/heures.test.mjs && tsx src/lib/reorganiser.test.mjs"
+    "test": "tsx src/lib/heures.test.mjs && tsx src/lib/reorganiser.test.mjs && tsx src/plan/moteur.test.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

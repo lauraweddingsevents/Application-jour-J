@@ -5,6 +5,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { BoutonLien } from "@/components/ui/Bouton";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { messageErreur } from "@/lib/erreurs";
+import { suiteSure } from "@/lib/suite";
 
 export function Confirmation() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export function Confirmation() {
     const type = (params.get("type") ?? "email") as EmailOtpType;
     const code = params.get("code");
     const erreurLien = params.get("error_description");
+    const suite = suiteSure(params.get("suite"));
 
     async function confirmer() {
       if (erreurLien) return setErreur(messageErreur({ message: erreurLien }));
@@ -29,14 +31,14 @@ export function Confirmation() {
       // 1. La bibliothèque Supabase traite déjà toute seule un lien « ?code=… » :
       //    on attend simplement qu'elle ait fini, puis on regarde si on est connecté.
       const { data } = await supabase.auth.getSession();
-      if (data.session) return router.replace("/tableau");
+      if (data.session) return router.replace(suite);
 
       // 2. Lien « universel » (?token_hash=…) : fonctionne même si l'e-mail
       //    est ouvert sur un autre appareil que celui de la demande.
       if (tokenHash) {
         const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
         if (error) return afficher(error);
-        return router.replace("/tableau");
+        return router.replace(suite);
       }
 
       if (code) {

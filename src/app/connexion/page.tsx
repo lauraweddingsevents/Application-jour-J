@@ -15,8 +15,7 @@ export default function Connexion() {
         Accéder à mes mariages
       </h1>
       <p className="mt-2 text-center text-encre-doux">
-        Pas de mot de passe : nous vous envoyons un lien de connexion par
-        e-mail.
+        Par un lien reçu par e-mail, ou avec votre mot de passe.
       </p>
       <FormulaireConnexion />
     </main>
