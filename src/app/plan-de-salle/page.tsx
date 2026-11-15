@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   title: { absolute: "Mon plan de salle – Le plan de table à l'échelle, simple et partagé" },
   description:
     "Dessinez votre salle de réception à l'échelle, placez tables et invités, et partagez le plan avec votre lieu, votre traiteur et votre décoratrice.",
+  manifest: "/plans/manifest.webmanifest",
+  appleWebApp: { capable: true, title: "Plan de salle", statusBarStyle: "default" },
 };
 
 const atouts = [
@@ -56,7 +58,7 @@ export default function AccueilPlan() {
           ))}
         </ul>
       </main>
-      <PiedDePage />
+      <PiedDePage marque="plan" />
     </div>
   );
 }

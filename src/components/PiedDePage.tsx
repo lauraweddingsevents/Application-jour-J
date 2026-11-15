@@ -1,10 +1,10 @@
 import Link from "next/link";
 
-export function PiedDePage() {
+export function PiedDePage({ marque = "coordo" }: { marque?: "coordo" | "plan" }) {
   return (
     <footer className="mt-auto px-4 py-8 text-center text-sm text-encre-doux">
       <p>
-        Ma Coordo · une création{" "}
+        {marque === "plan" ? "Mon plan de salle" : "Ma Coordo"} · une création{" "}
         <span className="text-or-fonce">Laura Weddings &amp; Events</span>
       </p>
       <p className="mt-2">
