@@ -1,9 +1,18 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { supabaseNavigateur } from "@/lib/supabase/navigateur";
+import { effacerMemoire } from "@/lib/memoire";
 import { BandeauHorsLigne } from "@/components/BandeauHorsLigne";
 import { LogoPlan } from "./LogoPlan";
 
-export function EnTetePlan({ retour }: { retour?: { href: string; texte: string } }) {
+export function EnTetePlan({ retour, deconnexion = false }: { retour?: { href: string; texte: string }; deconnexion?: boolean }) {
+  const router = useRouter();
+  async function seDeconnecter() {
+    await supabaseNavigateur().auth.signOut();
+    effacerMemoire();
+    router.replace("/plan-de-salle");
+  }
   return (
     <>
       <BandeauHorsLigne />
@@ -17,9 +26,15 @@ export function EnTetePlan({ retour }: { retour?: { href: string; texte: string 
             <LogoPlan />
           </Link>
         )}
-        <Link href="/compte?depuis=plans" className="min-h-[44px] px-2 pt-3 text-sm text-encre-doux underline-offset-4 hover:underline">
-          Mon compte
-        </Link>
+        {deconnexion ? (
+          <button type="button" onClick={seDeconnecter} className="min-h-[44px] px-2 text-sm text-encre-doux underline-offset-4 hover:underline">
+            Se déconnecter
+          </button>
+        ) : (
+          <Link href="/compte?depuis=plans" className="min-h-[44px] px-2 pt-3 text-sm text-encre-doux underline-offset-4 hover:underline">
+            Mon compte
+          </Link>
+        )}
       </header>
     </>
   );

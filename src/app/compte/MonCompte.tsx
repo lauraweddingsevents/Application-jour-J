@@ -9,6 +9,8 @@ import { useDroits, type Droits } from "@/lib/droits";
 import { dateLongue } from "@/lib/dates";
 import { lireProfil } from "@/lib/plans";
 import { ReglagesCompte } from "./Compte";
+import { EnTetePlan } from "@/components/plan/EnTetePlan";
+import { estAdressePlan } from "@/lib/marque";
 
 const jour = (iso?: string | null) => (iso ? dateLongue(iso.slice(0, 10)) : "");
 
@@ -61,12 +63,22 @@ function Contenu() {
   const [message, setMessage] = useState("");
   // Retour vers Mon plan de salle ou vers Ma Coordo, selon d'où l'on vient
   const [versPlans, setVersPlans] = useState(false);
+  // Utilisateur de Mon plan de salle seul : pas de bloc d'abonnement Ma Coordo
+  const [planSeul, setPlanSeul] = useState(false);
 
   useEffect(() => {
     const depuisPlans = new URLSearchParams(window.location.search).get("depuis") === "plans";
+    const adressePlan = estAdressePlan(window.location.host);
     lireProfil()
-      .then((p) => setVersPlans(depuisPlans || (!!p?.type_compte && p.type_compte !== "wedding_planner")))
-      .catch(() => setVersPlans(depuisPlans));
+      .then((p) => {
+        const pasPlanner = !!p?.type_compte && p.type_compte !== "wedding_planner";
+        setVersPlans(depuisPlans || adressePlan || pasPlanner);
+        setPlanSeul(adressePlan || pasPlanner);
+      })
+      .catch(() => {
+        setVersPlans(depuisPlans || adressePlan);
+        setPlanSeul(adressePlan);
+      });
   }, []);
 
   useEffect(() => {
@@ -97,12 +109,16 @@ function Contenu() {
   const d = droits ? description(droits) : null;
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6">
-      <EnTete retour={versPlans ? { href: "/plans", texte: "Mes plans" } : { href: "/tableau", texte: "Mes mariages" }} />
+      {planSeul ? (
+        <EnTetePlan retour={{ href: "/plans", texte: "Mes plans" }} deconnexion />
+      ) : (
+        <EnTete retour={versPlans ? { href: "/plans", texte: "Mes plans" } : { href: "/tableau", texte: "Mes mariages" }} />
+      )}
       <h1 className="mt-8 text-2xl font-medium">Mon compte</h1>
-      {email && <p className="mt-1 text-encre-doux">Connectée avec {email}</p>}
+      {email && <p className="mt-1 text-encre-doux">{planSeul ? `Adresse e-mail : ${email}` : `Connectée avec ${email}`}</p>}
 
-      {droits === undefined && <p className="mt-8 text-encre-doux">Chargement…</p>}
-      {d && droits && (
+      {!planSeul && droits === undefined && <p className="mt-8 text-encre-doux">Chargement…</p>}
+      {!planSeul && d && droits && (
         <Carte className="mt-6">
           <h2 className="font-medium">{d.titre}</h2>
           {d.texte && <p className="mt-1 text-sm text-encre-doux">{d.texte}</p>}
@@ -114,17 +130,17 @@ function Contenu() {
           {message && <p className="mt-3 text-sm text-alerte">{message}</p>}
         </Carte>
       )}
-      {droits === null && (
+      {!planSeul && droits === null && (
         <Carte className="mt-6">
           <h2 className="font-medium">Accès complet</h2>
         </Carte>
       )}
       <ReglagesCompte />
 
-      <p className="mt-6 text-sm text-encre-doux">
+      {!planSeul && <p className="mt-6 text-sm text-encre-doux">
         Ce compte donne aussi accès à <strong>Mon plan de salle</strong> et à <strong>Ma Visite Technique</strong>,
         l&apos;outil des visites techniques de lieux.
-      </p>
+      </p>}
     </main>
   );
 }

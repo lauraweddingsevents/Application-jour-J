@@ -19,11 +19,17 @@ export function Confirmation() {
     dejaFait.current = true;
 
     const supabase = supabaseNavigateur();
-    const tokenHash = params.get("token_hash");
+    // Le modèle d'e-mail (commun à plusieurs applications) peut ajouter
+    // « ?token_hash=… » à une adresse qui contient déjà « ?suite=… » :
+    // on retrouve alors le jeton à l'intérieur de « suite ».
+    const suiteBrute = params.get("suite");
+    const dansSuite = suiteBrute?.match(/[?&]token_hash=([^&#]+)/)?.[1];
+    const tokenHash = params.get("token_hash") ?? (dansSuite ? decodeURIComponent(dansSuite) : null);
     const type = (params.get("type") ?? "email") as EmailOtpType;
     const code = params.get("code");
     const erreurLien = params.get("error_description");
-    const suite = suiteSure(params.get("suite"));
+    const parDefaut = /plan-?de-?salle/i.test(window.location.host) ? "/plans" : "/tableau";
+    const suite = suiteSure(suiteBrute?.split(/[?&]token_hash=/)[0], parDefaut);
 
     async function confirmer() {
       if (erreurLien) return setErreur(messageErreur({ message: erreurLien }));
