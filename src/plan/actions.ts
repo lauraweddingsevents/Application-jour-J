@@ -12,15 +12,48 @@ function nomLibre(c: PlanContenu, base: string) {
 
 export function nouvelElement(c: PlanContenu, type: TypeElement, x: number, y: number): Element {
   const base = { id: uid(), x: Math.round(x / 5) * 5, y: Math.round(y / 5) * 5, rot: 0, guests: [] as Invite[] };
+  // Une nouvelle table reprend la taille de la dernière table du même type (ex. 183 × 76 cm)
+  const derniere = [...c.items].reverse().find((e) => e.type === type);
   switch (type) {
-    case "round": return { ...base, type, name: nomLibre(c, "Table"), d: 180, chairs: 10 };
-    case "rect": return { ...base, type, name: nomLibre(c, "Table"), L: 180, W: 80, sides: 3, ends: 0 };
+    case "round": {
+      const d = derniere?.type === "round" ? { d: derniere.d, chairs: derniere.chairs } : { d: 180, chairs: 10 };
+      return { ...base, type, name: nomLibre(c, "Table"), ...d };
+    }
+    case "rect": {
+      const d = derniere?.type === "rect" ? { L: derniere.L, W: derniere.W, sides: derniere.sides, ends: derniere.ends } : { L: 180, W: 80, sides: 3, ends: 0 };
+      return { ...base, type, name: nomLibre(c, "Table"), ...d };
+    }
     case "zone": return { ...base, type, name: "Piste de danse", L: 500, W: 500 };
     case "estrade": return { ...base, type, name: "Estrade", L: 400, W: 250 };
     case "pillar": return { ...base, type, name: nomLibre(c, "Poteau"), L: 40, shape: "square" };
     case "porte": return { ...base, type, name: nomLibre(c, "Porte"), L: 90, sens: "droite", y: 0 };
     case "fenetre": return { ...base, type, name: nomLibre(c, "Fenêtre"), L: 150, y: 0 };
   }
+}
+
+// Tailles de tables utilisées dans le plan (pour les proposer en raccourci)
+export function taillesUtilisees(c: PlanContenu, type: "round" | "rect"): string[] {
+  const t = new Set<string>();
+  for (const e of c.items) {
+    if (e.type === "round" && type === "round") t.add(String(e.d));
+    if (e.type === "rect" && type === "rect") t.add(`${e.L}×${e.W}`);
+  }
+  return [...t];
+}
+
+// Donne à toutes les tables du même type la taille et les chaises de celle-ci
+// (sauf les tables fixées par le lieu)
+export function appliquerATouteslesTables(c: PlanContenu, id: string): PlanContenu {
+  const m = c.items.find((e) => e.id === id);
+  if (!m || (m.type !== "round" && m.type !== "rect")) return c;
+  return {
+    ...c,
+    items: c.items.map((e) => {
+      if (e.id === id || e.type !== m.type || e.verrou) return e;
+      if (m.type === "round") return { ...e, d: m.d, chairs: m.chairs } as Element;
+      return { ...e, L: m.L, W: m.W, sides: m.sides, ends: m.ends } as Element;
+    }),
+  };
 }
 
 export const majElement = (c: PlanContenu, id: string, champs: Partial<Element>): PlanContenu => ({

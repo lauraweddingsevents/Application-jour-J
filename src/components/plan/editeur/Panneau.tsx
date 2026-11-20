@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChampNombre } from "./ChampNombre";
 import { ListeCommentaires, type ActionsCommentaires } from "./Commentaires";
 import type { Commentaire } from "@/lib/partagePlans";
-import { ZONES_PRETES, dupliquer, majElement, majInvite, placerInvite, supprimer, supprimerInvite } from "@/plan/actions";
+import { ZONES_PRETES, appliquerATouteslesTables, dupliquer, taillesUtilisees, majElement, majInvite, placerInvite, supprimer, supprimerInvite } from "@/plan/actions";
 import { uid } from "@/plan/exemple";
 import { estTable, places, pluriel, resume, texteMenus, type Alerte } from "@/plan/moteur";
 import { MENUS, type Element, type Menu, type PlanContenu, type TypeElement } from "@/plan/types";
@@ -195,14 +195,29 @@ function Reglages({
     </button>
   );
 
+  // « Toutes les tables à cette taille » (utile quand le lieu n'a qu'un modèle de table)
+  const autres = contenu.items.filter((x) => x.type === e.type && x.id !== e.id && !x.verrou);
+  const toutes = !fige && autres.length > 0 && (
+    <button
+      type="button"
+      onClick={() => modifier((c) => appliquerATouteslesTables(c, e.id))}
+      className="min-h-[40px] rounded-full bg-blanc px-4 text-sm text-or-fonce ring-1 ring-or-clair"
+    >
+      Mettre les {autres.length + 1} tables {e.type === "round" ? "rondes" : "rectangulaires"} à cette taille
+    </button>
+  );
+
   let reglages = null;
   if (e.type === "round") {
     reglages = (
       <>
         <div className="flex flex-wrap gap-1.5">
           {[[120, 8], [150, 8], [160, 10], [180, 10], [200, 12]].map(([d, ch]) => puce(e.d === d, `Ø${d}`, () => maj({ d, chairs: ch } as Partial<Element>)))}
+          {taillesUtilisees(contenu, "round").map(Number).filter((d) => ![120, 150, 160, 180, 200].includes(d)).map((d) =>
+            puce(e.d === d, `Ø${d}`, () => maj({ d } as Partial<Element>)))}
         </div>
         <div className="grid grid-cols-2 gap-2">{num("Diamètre", "d", 10, 60, 300, "cm")}{num("Chaises", "chairs", 1, 0, 20)}</div>
+        {toutes}
       </>
     );
   } else if (e.type === "rect") {
@@ -210,11 +225,17 @@ function Reglages({
       <>
         <div className="flex flex-wrap gap-1.5">
           {[[120, 80], [180, 80], [200, 100], [240, 80]].map(([L, W]) => puce(e.L === L && e.W === W, `${L}×${W}`, () => maj({ L, W, sides: Math.max(1, Math.round(L / 60)) } as Partial<Element>)))}
+          {taillesUtilisees(contenu, "rect").filter((t) => !["120×80", "180×80", "200×100", "240×80"].includes(t)).map((t) => {
+            const [L, W] = t.split("×").map(Number);
+            return puce(e.L === L && e.W === W, t, () => maj({ L, W, sides: Math.max(1, Math.round(L / 60)) } as Partial<Element>));
+          })}
         </div>
+        <p className="text-xs text-encre-doux">Taille sur mesure : tapez la longueur et la largeur (ex. 183 × 76).</p>
         <div className="grid grid-cols-2 gap-2">
-          {num("Longueur", "L", 10, 60, 1200, "cm")}{num("Largeur", "W", 10, 40, 300, "cm")}
+          {num("Longueur", "L", 10, 60, 1200, "cm")}{num("Largeur", "W", 5, 40, 300, "cm")}
           {num("Chaises par côté", "sides", 1, 0, 30)}{num("Chaises en bout", "ends", 1, 0, 3)}
         </div>
+        {toutes}
       </>
     );
   } else if (e.type === "zone") {
