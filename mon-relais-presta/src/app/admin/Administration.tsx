@@ -3,34 +3,36 @@ import { useCallback, useEffect, useState } from "react";
 import { Bouton } from "@/components/ui/Bouton";
 import { Carte } from "@/components/ui/Carte";
 import { Champ } from "@/components/ui/Champ";
-import { Choix } from "@/components/ui/Choix";
+import Link from "next/link";
 import { useMembre, nomMetier } from "@/lib/membre";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { messageErreur } from "@/lib/erreurs";
 import { libelleDepartement, nomZone, ZONES, type Zone } from "@/lib/zones";
 import type { MembreAdmin, StatutMembre } from "@/lib/types";
 
-type Onglet = "inscriptions" | "membres" | "metiers" | "charte";
+type Onglet = "inscriptions" | "membres" | "signalements" | "metiers" | "charte";
 
 export function Administration() {
   const [onglet, setOnglet] = useState<Onglet>("inscriptions");
   return (
     <div className="flex flex-col gap-5">
       <h1 className="text-2xl font-light">Administration</h1>
-      <div className="-mx-4 overflow-x-auto px-4">
-        <Choix<Onglet>
-          libelle="Rubrique"
-          valeur={onglet}
-          onChange={setOnglet}
-          options={[
-            { valeur: "inscriptions", texte: "À valider" },
-            { valeur: "membres", texte: "Membres" },
-            { valeur: "metiers", texte: "Métiers" },
-            { valeur: "charte", texte: "Charte" },
-          ]}
-        />
-      </div>
+      <nav className="flex flex-wrap gap-2" aria-label="Rubriques">
+        {([
+          ["inscriptions", "À valider"],
+          ["membres", "Membres"],
+          ["signalements", "Signalements"],
+          ["metiers", "Métiers"],
+          ["charte", "Charte"],
+        ] as [Onglet, string][]).map(([v, t]) => (
+          <button key={v} type="button" aria-pressed={onglet === v} onClick={() => setOnglet(v)}
+            className={`min-h-[44px] rounded-full border px-4 text-sm font-medium ${onglet === v ? "border-or bg-or text-blanc" : "border-or-clair bg-blanc"}`}>
+            {t}
+          </button>
+        ))}
+      </nav>
       {(onglet === "inscriptions" || onglet === "membres") && <Membres enAttente={onglet === "inscriptions"} />}
+      {onglet === "signalements" && <Signalements />}
       {onglet === "metiers" && <Metiers />}
       {onglet === "charte" && <EditionCharte />}
     </div>
@@ -239,5 +241,102 @@ function EditionCharte() {
         Publier la nouvelle version
       </Bouton>
     </Carte>
+  );
+}
+
+// ---------------- Signalements ----------------
+type Signalement = {
+  id: number;
+  cible: "demande" | "membre";
+  motif: string;
+  cree_le: string;
+  traite_le: string | null;
+  decision: string;
+  auteur: { id: string; nom: string };
+  demande: { id: string; lieu: string; date_mariage: string; metier_id: number; statut: string; auteur_id: string; auteur_nom: string } | null;
+  membre: { id: string; nom: string; statut: string } | null;
+};
+
+function Signalements() {
+  const { metiers } = useMembre();
+  const [liste, setListe] = useState<Signalement[] | null>(null);
+  const [erreur, setErreur] = useState("");
+
+  const charger = useCallback(async () => {
+    const { data, error } = await supabaseNavigateur().rpc("admin_signalements");
+    if (error) setErreur(messageErreur(error));
+    setListe((data as Signalement[]) ?? []);
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    charger();
+  }, [charger]);
+
+  async function appeler(rpc: string, args: Record<string, unknown>) {
+    setErreur("");
+    const { error } = await supabaseNavigateur().rpc(rpc, args);
+    if (error) return setErreur(messageErreur(error));
+    await charger();
+  }
+
+  if (!liste) return <p className="text-encre-doux">Chargement…</p>;
+  return (
+    <div className="flex flex-col gap-3">
+      {erreur && <p className="text-sm text-alerte">{erreur}</p>}
+      {liste.length === 0 && <Carte className="text-encre-doux">Aucun signalement.</Carte>}
+      {liste.map((s) => (
+        <Carte key={s.id} className={`flex flex-col gap-2 ${s.traite_le ? "opacity-60" : ""}`}>
+          <div className="flex items-start justify-between gap-2">
+            <p className="font-medium">
+              {s.cible === "demande" ? "Demande" : "Profil"} :{" "}
+              {s.demande && (
+                <Link href={`/demande/${s.demande.id}`} className="text-or-fonce underline underline-offset-4">
+                  {nomMetier(metiers, s.demande.metier_id)} · {s.demande.lieu}
+                </Link>
+              )}
+              {s.membre && <Link href={`/membre/${s.membre.id}`} className="text-or-fonce underline underline-offset-4">{s.membre.nom}</Link>}
+            </p>
+            <span className="shrink-0 text-xs text-encre-doux">{new Date(s.cree_le).toLocaleDateString("fr-FR")}</span>
+          </div>
+          {s.demande && <p className="text-sm text-encre-doux">Déposée par {s.demande.auteur_nom} · statut {s.demande.statut}</p>}
+          <p className="rounded-xl bg-creme-fonce/50 p-3">« {s.motif} »</p>
+          <p className="text-sm text-encre-doux">Signalé par {s.auteur.nom}</p>
+          {s.traite_le ? (
+            <p className="text-sm text-succes">✓ Traité le {new Date(s.traite_le).toLocaleDateString("fr-FR")}{s.decision && ` : ${s.decision}`}</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {s.demande && s.demande.statut !== "annulee" && (
+                <Bouton variante="secondaire" onClick={() => window.confirm("Retirer cette demande (statut Annulée) ?") && appeler("admin_annuler_demande", { p_id: s.demande!.id })}>
+                  Retirer la demande
+                </Bouton>
+              )}
+              {s.membre && s.membre.statut === "valide" && (
+                <Bouton variante="secondaire" onClick={() => {
+                  const motif = window.prompt("Motif de la suspension :", s.motif);
+                  if (motif !== null) appeler("admin_changer_statut", { p_membre: s.membre!.id, p_statut: "suspendu", p_motif: motif });
+                }}>
+                  Suspendre {s.membre.nom}
+                </Bouton>
+              )}
+              {s.demande && (
+                <Bouton variante="secondaire" onClick={() => {
+                  const motif = window.prompt(`Motif de la suspension de ${s.demande!.auteur_nom} :`, s.motif);
+                  if (motif !== null) appeler("admin_changer_statut", { p_membre: s.demande!.auteur_id, p_statut: "suspendu", p_motif: motif });
+                }}>
+                  Suspendre l&apos;auteur ({s.demande.auteur_nom})
+                </Bouton>
+              )}
+              <Bouton onClick={() => {
+                const decision = window.prompt("Note de traitement (facultatif) :", "");
+                if (decision !== null) appeler("admin_traiter_signalement", { p_id: s.id, p_decision: decision });
+              }}>
+                Marquer comme traité
+              </Bouton>
+            </div>
+          )}
+        </Carte>
+      ))}
+    </div>
   );
 }

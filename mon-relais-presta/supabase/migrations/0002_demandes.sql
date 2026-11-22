@@ -252,7 +252,8 @@ begin
     where id = p_id;
   end if;
   insert into evenements (type, demande_id, membre_id, donnees)
-  values ('positionnement', p_id, auth.uid(), jsonb_build_object('premier', d.statut = 'ouverte'));
+  values ('positionnement', p_id, auth.uid(),
+          jsonb_build_object('premier', d.statut = 'ouverte', 'message', trim(coalesce(p_message, ''))));
 end $$;
 
 -- ---------- Se retirer ----------

@@ -7,6 +7,7 @@ import { Carte } from "@/components/ui/Carte";
 import { Case } from "@/components/ui/Case";
 import { ZoneTexte } from "@/components/ui/ZoneTexte";
 import { Pastille } from "@/components/demandes/Pastille";
+import { Signaler } from "@/components/Signaler";
 import { useMembre, nomMetier } from "@/lib/membre";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { messageErreur } from "@/lib/erreurs";
@@ -160,6 +161,8 @@ export function FicheDemande({ id }: { id: string }) {
           Je ne suis plus disponible : me retirer
         </Bouton>
       )}
+
+      {!d.je_suis_auteur && <Signaler cible="demande" id={d.id} />}
     </div>
   );
 }

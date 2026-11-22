@@ -44,3 +44,26 @@
   « Expirée » : demande encore Ouverte dont la date est passée. Une demande Transmise dont
   la date est passée reste Transmise (rappel à 15 jours pour indiquer Signée / Non signée).
 - Annulation : les coordonnées sont effacées aussitôt, les positionnés sont prévenus.
+
+## Profils et signalements (étape 5)
+- Compteur de réciprocité : « données » = demandes déposées (hors annulées) ;
+  « reçues » = demandes sur lesquelles le membre s'est positionné (sans s'être retiré).
+  Les mariages signés grâce à la communauté sont affichés en plus.
+- « Signaler un abus » sur chaque demande et chaque profil : confidentiel, visible
+  seulement de l'administration (de la zone concernée), qui peut retirer la demande,
+  suspendre le membre, et marquer le signalement comme traité.
+
+## Notifications (étape 6)
+- Chaque action enregistre un « événement » dans la base ; le serveur (`/api/notifier`)
+  les envoie aussitôt (e-mail + push), et la tâche horaire (`/api/taches`) rattrape ceux
+  qui seraient restés en attente.
+- Nouvelle demande : membres validés du même métier qui couvrent le département
+  (un seul e-mail en copie cachée).
+- Positionnement : l'auteur (« X est dispo », + rappel des 24 h en mode « je transmets ») et
+  le prestataire (« demande transmise »). Retrait : l'auteur. Modification / annulation :
+  les positionnés. Inscription et signalement : l'administration de la zone. Validation : le membre.
+- Tâche horaire : demandes « Expirées », suppression RGPD des coordonnées (3 mois après le
+  mariage), rappel 20 h (coordonnées non reçues), relance 48 h sans positionnement (bouton
+  WhatsApp pré-rempli), rappel 15 jours après transmission (signée ou non ?).
+- Chaque membre peut couper les e-mails et/ou les push dans « Mon profil ».
+- Les e-mails ne contiennent jamais les coordonnées des mariés (seulement un lien).
