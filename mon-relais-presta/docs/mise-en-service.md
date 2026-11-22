@@ -86,7 +86,8 @@ create extension if not exists pg_net;
 select cron.schedule('relais-taches', '7 * * * *', $cron$
   select net.http_get(
     url := 'https://mon-relais-presta.vercel.app/api/taches',
-    headers := jsonb_build_object('Authorization', 'Bearer VOTRE_SECRET_TACHES')
+    headers := jsonb_build_object('Authorization', 'Bearer VOTRE_SECRET_TACHES'),
+    timeout_milliseconds := 60000
   );
 $cron$);
 ```

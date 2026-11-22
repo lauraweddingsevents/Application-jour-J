@@ -8,6 +8,7 @@ import { Statistiques } from "./Statistiques";
 import { useMembre, nomMetier } from "@/lib/membre";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { messageErreur } from "@/lib/erreurs";
+import { notifier } from "@/lib/notifier";
 import { libelleDepartement, nomZone, ZONES, type Zone } from "@/lib/zones";
 import type { MembreAdmin, StatutMembre } from "@/lib/types";
 
@@ -76,6 +77,7 @@ function Membres({ enAttente }: { enAttente: boolean }) {
     }
     const { error } = await supabaseNavigateur().rpc("admin_changer_statut", { p_membre: m.id, p_statut: statut, p_motif: motif });
     if (error) return setErreur(messageErreur(error));
+    notifier();
     await charger();
   }
 
@@ -280,6 +282,7 @@ function Signalements() {
     setErreur("");
     const { error } = await supabaseNavigateur().rpc(rpc, args);
     if (error) return setErreur(messageErreur(error));
+    notifier();
     await charger();
   }
 

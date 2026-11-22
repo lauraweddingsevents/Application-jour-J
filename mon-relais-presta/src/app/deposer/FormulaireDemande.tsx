@@ -12,6 +12,7 @@ import { ZoneTexte } from "@/components/ui/ZoneTexte";
 import { useMembre, nomMetier } from "@/lib/membre";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { messageErreur } from "@/lib/erreurs";
+import { notifier } from "@/lib/notifier";
 import { aujourdhuiIso, type DetailDemande, type ModeCoordonnees } from "@/lib/demandes";
 import { DEPARTEMENTS, ZONES } from "@/lib/zones";
 
@@ -122,7 +123,7 @@ export function FormulaireDemande() {
       const { error } = await supabase.rpc("modifier_demande", { p_id: idModif, ...commun });
       setEnCours(false);
       if (error) return setErreur(messageErreur(error));
-      fetch("/api/notifier", { method: "POST" }).catch(() => {});
+      notifier();
       return router.replace(`/demande/${idModif}`);
     }
     const { data, error } = await supabase.rpc("deposer_demande", {
@@ -131,7 +132,7 @@ export function FormulaireDemande() {
     });
     setEnCours(false);
     if (error) return setErreur(messageErreur(error));
-    fetch("/api/notifier", { method: "POST" }).catch(() => {});
+    notifier();
     router.replace(`/demande/${data}?nouvelle=1`);
   }
 

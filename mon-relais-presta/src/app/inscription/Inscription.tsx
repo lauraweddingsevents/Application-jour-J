@@ -10,6 +10,7 @@ import { TexteCharte } from "@/components/TexteCharte";
 import { useMembre } from "@/lib/membre";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { messageErreur } from "@/lib/erreurs";
+import { notifier } from "@/lib/notifier";
 
 // Première connexion : la fiche du membre et l'acceptation de la charte
 export function Inscription() {
@@ -69,6 +70,8 @@ export function Inscription() {
               p_charte_version: version,
             });
             if (error) return messageErreur(error);
+            // Prévenir l'administration tout de suite
+            notifier();
             await recharger();
             router.replace("/attente");
           }}
