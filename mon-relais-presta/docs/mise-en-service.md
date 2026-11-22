@@ -12,8 +12,9 @@
    « Votre lien de connexion à Mon Relais Presta »). Le code `{{ .Token }}` peut être
    ajouté dans l'e-mail pour la connexion par code.
 6. **Authentication → Emails → SMTP Settings** : envoyer depuis Gmail
-   (hôte `smtp.gmail.com`, port 465, identifiant = l'adresse Gmail, mot de passe =
-   un mot de passe d'application créé sur myaccount.google.com/apppasswords).
+   (hôte `smtp.gmail.com`, port 465, identifiant = votre adresse Gmail, mot de passe =
+   le mot de passe d'application « Mon Relais Presta » de l'étape 4a, nom d'expéditeur
+   « Mon Relais Presta »).
    Sans cela, Supabase limite l'envoi à quelques e-mails par heure.
 
 ## 2. Créer le projet Vercel (gratuit)
@@ -36,14 +37,25 @@
    ```
 3. Recharger l'application : le bouton « Administration » apparaît en haut.
 
+## 3 bis. Nommer Mélanie administratrice
+1. Mélanie s'inscrit dans l'application (son e-mail, sa fiche, la charte).
+2. Administration → « À valider » → **Valider** son inscription.
+3. Administration → « Membres » → sa fiche → **Nommer administrateur…**, puis choisir :
+   - **Wedding Presta Club (PACA) uniquement** : elle valide les inscriptions, traite les
+     signalements et voit les statistiques de la zone PACA seulement ;
+   - ou **Toutes les zones** : mêmes droits que vous, y compris nommer d'autres administrateurs.
+   Dans les deux cas, elle peut modifier la charte et la liste des métiers.
+4. Elle recevra alors, comme vous, les e-mails « nouvelle inscription » et « signalement »
+   de sa zone.
+
 ## 4. Notifications (e-mails, téléphone) et tâches automatiques
 ### 4a. Variables à ajouter dans Vercel (Settings → Environment Variables)
 | Variable | Où la trouver |
 |---|---|
 | `SUPABASE_SECRET_KEY` | Supabase → Project Settings → API Keys → Secret key (**secret** : ne jamais la partager) |
-| `SMTP_UTILISATEUR` | l'adresse Gmail qui envoie les e-mails |
-| `SMTP_MOT_DE_PASSE` | un mot de passe d'application Gmail (myaccount.google.com/apppasswords), nommé « Mon Relais Presta » |
-| `EMAIL_EXPEDITEUR` | facultatif, ex. `Mon Relais Presta <adresse@gmail.com>` |
+| `SMTP_UTILISATEUR` | votre adresse Gmail (celle de votre boîte mail) |
+| `SMTP_MOT_DE_PASSE` | un **nouveau** mot de passe d'application Gmail (myaccount.google.com/apppasswords), nommé « Mon Relais Presta » : ne pas réutiliser celui de Ma Coordo, pour pouvoir révoquer l'un sans couper l'autre |
+| `EMAIL_EXPEDITEUR` | `Mon Relais Presta <votre adresse Gmail>` : les membres voient « Mon Relais Presta » comme expéditeur, et leurs réponses arrivent dans votre boîte |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` et `VAPID_PRIVATE_KEY` | sur un ordinateur : `npx web-push generate-vapid-keys` (une seule fois ; garder la clé privée secrète) |
 | `VAPID_CONTACT` | `mailto:` + votre adresse |
 | `TACHES_SECRET` | une longue suite de lettres et chiffres au hasard (40 caractères) |

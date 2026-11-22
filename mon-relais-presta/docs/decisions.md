@@ -3,8 +3,11 @@
 ## Organisation
 - Application **séparée** de Ma Coordo (choix de Laura) : projet Supabase, projet Vercel et
   comptes propres. Le code est rangé dans le dossier `mon-relais-presta/` du dépôt.
-- E-mails de notification : envoyés depuis un Gmail (mot de passe d'application) au
-  démarrage ; passage à un service pro (Resend) avec le nom de domaine.
+- E-mails (connexion et notifications) : envoyés depuis la boîte Gmail de Laura, avec un
+  mot de passe d'application propre à Mon Relais Presta (distinct de celui de Ma Coordo),
+  nom d'expéditeur « Mon Relais Presta ». Passage à un service pro (Resend) avec le nom de domaine.
+- Administration : Laura (toutes les zones), puis Mélanie (Wedding Presta Club), nommée
+  depuis l'application une fois son inscription validée.
 
 ## Accès
 - Connexion par **lien magique** (ou code à 6 chiffres reçu dans le même e-mail).
