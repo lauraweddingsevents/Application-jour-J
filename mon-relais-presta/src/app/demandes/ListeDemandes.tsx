@@ -4,6 +4,7 @@ import { BoutonLien } from "@/components/ui/Bouton";
 import { Carte } from "@/components/ui/Carte";
 import { Choix } from "@/components/ui/Choix";
 import { Liste } from "@/components/ui/Liste";
+import { GuideInstallation } from "@/components/GuideInstallation";
 import { CarteDemande } from "@/components/demandes/CarteDemande";
 import { useMembre, nomMetier } from "@/lib/membre";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
@@ -123,6 +124,7 @@ export function ListeDemandes() {
         )}
       </div>
 
+      <GuideInstallation />
       {erreur && <p className="text-sm text-alerte">{erreur}</p>}
       {!demandes && <p className="text-encre-doux">Chargement des demandes…</p>}
       {demandes && affichees.length === 0 && (
