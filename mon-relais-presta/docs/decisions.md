@@ -21,3 +21,26 @@
 - PACA (Wedding Presta Club) : 04, 05, 06, 13, 83, 84.
 - Rhône-Alpes (Wedding Social Hub) : 01, 07, 26, 38, 42, 69, 73, 74.
 - Affichage « 13 · Bouches-du-Rhône ».
+
+## Demandes (étapes 2 à 4)
+- Une demande = un seul métier. « Dupliquer pour un autre métier » crée une nouvelle demande
+  du même « groupe » (même date, lieu, infos et coordonnées) ; un métier ne peut être
+  demandé qu'une fois par mariage. Chaque demande garde ses 3 places.
+- Coordonnées des mariés : table verrouillée, lisible uniquement via la fonction
+  `detail_demande` par l'auteur et les prestataires positionnés (pas même l'administration).
+  Il faut au moins le téléphone ou l'e-mail. La case « accord des mariés » est obligatoire.
+- « Je suis dispo » : case d'engagement obligatoire ; 3 positionnés au maximum (contrôle
+  dans la base, avec verrou : deux clics simultanés ne peuvent pas dépasser la limite).
+  « Complète » = 3 positionnés sur une demande Ouverte/Transmise (calculé, non enregistré).
+- Le 1er positionnement fait passer la demande en « Transmise ». Si tous les positionnés
+  se retirent, elle redevient « Ouverte ».
+- Le métier ne peut plus être modifié une fois quelqu'un positionné (annuler et redéposer).
+- L'auteur voit les positionnés (nom, entreprise, message, e-mail) ; les autres membres
+  voient seulement le nombre.
+- Mode « je transmets moi-même » : compte à rebours de 24 h pour chaque positionné,
+  bouton « J'ai reçu les coordonnées » pour le prestataire.
+- Statuts : Ouverte → Transmise → Signée / Non signée (l'auteur peut revenir en arrière).
+  En « Signée », l'auteur peut indiquer avec quel prestataire (sert aux statistiques).
+  « Expirée » : demande encore Ouverte dont la date est passée. Une demande Transmise dont
+  la date est passée reste Transmise (rappel à 15 jours pour indiquer Signée / Non signée).
+- Annulation : les coordonnées sont effacées aussitôt, les positionnés sont prévenus.

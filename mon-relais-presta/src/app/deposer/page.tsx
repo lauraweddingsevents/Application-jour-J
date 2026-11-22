@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Coquille } from "@/components/Coquille";
-import { Carte } from "@/components/ui/Carte";
+import { FormulaireDemande } from "./FormulaireDemande";
 
 export const metadata: Metadata = { title: "Déposer une demande" };
 
-// Page construite à l'étape 2
-export default function Page() {
+export default function PageDeposer() {
   return (
     <Coquille>
-      <h1 className="text-2xl font-light">Déposer une demande</h1>
-      <Carte className="mt-5 text-encre-doux">Bientôt disponible.</Carte>
+      <Suspense fallback={<p className="text-encre-doux">Chargement…</p>}>
+        <FormulaireDemande />
+      </Suspense>
     </Coquille>
   );
 }

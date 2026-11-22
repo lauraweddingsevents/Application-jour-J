@@ -1,15 +1,13 @@
 import type { Metadata } from "next";
 import { Coquille } from "@/components/Coquille";
-import { Carte } from "@/components/ui/Carte";
+import { MesSuivis } from "./MesSuivis";
 
 export const metadata: Metadata = { title: "Mes suivis" };
 
-// Page construite à l'étape 2
-export default function Page() {
+export default function PageMesSuivis() {
   return (
     <Coquille>
-      <h1 className="text-2xl font-light">Mes suivis</h1>
-      <Carte className="mt-5 text-encre-doux">Bientôt disponible.</Carte>
+      <MesSuivis />
     </Coquille>
   );
 }
