@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Application indépendante, avec sa propre configuration
+    "mon-relais-presta/**",
   ]),
 ]);
 
