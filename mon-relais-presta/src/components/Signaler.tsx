@@ -5,6 +5,7 @@ import { Carte } from "@/components/ui/Carte";
 import { ZoneTexte } from "@/components/ui/ZoneTexte";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { messageErreur } from "@/lib/erreurs";
+import { notifier } from "@/lib/notifier";
 
 // « Signaler un abus » : sur chaque demande et chaque profil
 export function Signaler({ cible, id }: { cible: "demande" | "membre"; id: string }) {
@@ -38,7 +39,7 @@ export function Signaler({ cible, id }: { cible: "demande" | "membre"; id: strin
             setErreur(messageErreur(error));
             return setEtat("saisie");
           }
-          fetch("/api/notifier", { method: "POST" }).catch(() => {});
+          notifier();
           setEtat("envoye");
         }}
       >

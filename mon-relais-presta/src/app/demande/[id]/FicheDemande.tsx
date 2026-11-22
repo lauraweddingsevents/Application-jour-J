@@ -11,6 +11,7 @@ import { Signaler } from "@/components/Signaler";
 import { useMembre, nomMetier } from "@/lib/membre";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { messageErreur } from "@/lib/erreurs";
+import { notifier } from "@/lib/notifier";
 import {
   dateCourte, dateLongue, depart, dureeLisible, euros, lienWhatsApp, messageWhatsApp, resteAvantEcheance,
   type DetailDemande, type Positionne,
@@ -48,7 +49,7 @@ export function FicheDemande({ id }: { id: string }) {
       setErreur(messageErreur(error));
       return false;
     }
-    fetch("/api/notifier", { method: "POST" }).catch(() => {});
+    notifier();
     await charger();
     return true;
   }
