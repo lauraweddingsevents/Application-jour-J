@@ -1,6 +1,17 @@
 # Mise en service de Mon Relais Presta
 
+## 0. Créer l'adresse Gmail de l'application
+1. Créer une adresse Gmail dédiée (ex. `monrelaispresta@gmail.com` ou une variante libre).
+   Elle sert à deux choses : posséder le projet Supabase et envoyer les e-mails.
+2. Dans ce compte Google : Sécurité → activer la **validation en deux étapes**
+   (obligatoire pour créer ensuite un « mot de passe d'application »).
+3. Ranger ses identifiants en lieu sûr (gestionnaire de mots de passe).
+
 ## 1. Créer le projet Supabase (gratuit)
+0. Se créer un compte Supabase **avec l'adresse Gmail de l'application** (votre compte
+   habituel a déjà ses 2 projets gratuits). Ensuite, Organization settings → Team →
+   « Invite member » : inviter votre adresse habituelle avec le rôle **Owner**, et accepter
+   l'invitation : le projet apparaîtra aussi dans votre Supabase habituel.
 1. supabase.com → « New project » → nom `mon-relais-presta`, région **Europe (Paris)**,
    choisir un mot de passe de base de données (à garder précieusement).
 2. **SQL Editor** → exécuter, dans l'ordre, chaque fichier de `supabase/migrations/`
@@ -12,7 +23,7 @@
    « Votre lien de connexion à Mon Relais Presta »). Le code `{{ .Token }}` peut être
    ajouté dans l'e-mail pour la connexion par code.
 6. **Authentication → Emails → SMTP Settings** : envoyer depuis Gmail
-   (hôte `smtp.gmail.com`, port 465, identifiant = votre adresse Gmail, mot de passe =
+   (hôte `smtp.gmail.com`, port 465, identifiant = l'adresse Gmail de l'application, mot de passe =
    le mot de passe d'application « Mon Relais Presta » de l'étape 4a, nom d'expéditeur
    « Mon Relais Presta »).
    Sans cela, Supabase limite l'envoi à quelques e-mails par heure.
@@ -53,9 +64,9 @@
 | Variable | Où la trouver |
 |---|---|
 | `SUPABASE_SECRET_KEY` | Supabase → Project Settings → API Keys → Secret key (**secret** : ne jamais la partager) |
-| `SMTP_UTILISATEUR` | votre adresse Gmail (celle de votre boîte mail) |
-| `SMTP_MOT_DE_PASSE` | un **nouveau** mot de passe d'application Gmail (myaccount.google.com/apppasswords), nommé « Mon Relais Presta » : ne pas réutiliser celui de Ma Coordo, pour pouvoir révoquer l'un sans couper l'autre |
-| `EMAIL_EXPEDITEUR` | `Mon Relais Presta <votre adresse Gmail>` : les membres voient « Mon Relais Presta » comme expéditeur, et leurs réponses arrivent dans votre boîte |
+| `SMTP_UTILISATEUR` | l'adresse Gmail de l'application (étape 0) |
+| `SMTP_MOT_DE_PASSE` | un mot de passe d'application créé **depuis ce compte Gmail** (myaccount.google.com/apppasswords), nommé « Mon Relais Presta » |
+| `EMAIL_EXPEDITEUR` | `Mon Relais Presta <adresse Gmail de l'application>` : les membres voient « Mon Relais Presta » comme expéditeur ; leurs éventuelles réponses arrivent dans cette boîte |
 | `NEXT_PUBLIC_VAPID_PUBLIC_KEY` et `VAPID_PRIVATE_KEY` | sur un ordinateur : `npx web-push generate-vapid-keys` (une seule fois ; garder la clé privée secrète) |
 | `VAPID_CONTACT` | `mailto:` + votre adresse |
 | `TACHES_SECRET` | une longue suite de lettres et chiffres au hasard (40 caractères) |
