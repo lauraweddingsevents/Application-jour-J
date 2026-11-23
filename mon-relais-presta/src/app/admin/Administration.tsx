@@ -5,7 +5,7 @@ import { Carte } from "@/components/ui/Carte";
 import { Champ } from "@/components/ui/Champ";
 import Link from "next/link";
 import { Statistiques } from "./Statistiques";
-import { useMembre, nomMetier } from "@/lib/membre";
+import { useMembre, nomMetier, nomsMetiers } from "@/lib/membre";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { messageErreur } from "@/lib/erreurs";
 import { notifier } from "@/lib/notifier";
@@ -91,7 +91,7 @@ function Membres({ enAttente }: { enAttente: boolean }) {
   const q = recherche.trim().toLowerCase();
   const affiches = liste
     .filter((m) => (enAttente ? m.statut === "en_attente" : m.statut !== "en_attente"))
-    .filter((m) => !q || [m.nom, m.entreprise, m.email, nomMetier(metiers, m.metier_id)].join(" ").toLowerCase().includes(q));
+    .filter((m) => !q || [m.nom, m.entreprise, m.email, nomsMetiers(metiers, m.metiers)].join(" ").toLowerCase().includes(q));
 
   return (
     <div className="flex flex-col gap-3">
@@ -108,7 +108,7 @@ function Membres({ enAttente }: { enAttente: boolean }) {
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="font-medium">{m.nom}{m.entreprise && <span className="font-normal text-encre-doux"> · {m.entreprise}</span>}</p>
-              <p className="text-sm text-encre-doux">{nomMetier(metiers, m.metier_id)} · {m.zones.map(nomZone).join(" + ")}</p>
+              <p className="text-sm text-encre-doux">{nomsMetiers(metiers, m.metiers)} · {m.zones.map(nomZone).join(" + ")}</p>
             </div>
             <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
               m.statut === "valide" ? "bg-succes/15 text-succes" : m.statut === "en_attente" ? "bg-or-clair/50 text-or-fonce" : "bg-alerte/10 text-alerte"

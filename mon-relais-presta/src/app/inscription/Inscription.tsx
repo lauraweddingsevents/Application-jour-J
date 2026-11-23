@@ -41,7 +41,7 @@ export function Inscription() {
           initial={{
             nom: membre?.nom ?? "",
             entreprise: membre?.entreprise ?? "",
-            metier_id: membre?.metier_id ?? null,
+            metiers: membre?.metiers ?? [],
             zones: membre?.zones ?? [],
             departements: membre?.departements ?? [],
             lien: membre?.lien ?? "",
@@ -63,7 +63,7 @@ export function Inscription() {
             const { error } = await supabaseNavigateur().rpc("inscription", {
               p_nom: v.nom,
               p_entreprise: v.entreprise,
-              p_metier_id: v.metier_id,
+              p_metiers: v.metiers,
               p_zones: v.zones,
               p_departements: v.departements,
               p_lien: v.lien,

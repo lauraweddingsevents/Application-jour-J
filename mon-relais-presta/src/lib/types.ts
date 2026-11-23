@@ -11,6 +11,7 @@ export type Membre = {
   nom: string;
   entreprise: string;
   metier_id: number | null;
+  metiers: number[];
   zones: Zone[];
   departements: string[];
   lien: string;
@@ -23,7 +24,7 @@ export type Membre = {
 };
 
 export const COLONNES_MEMBRE =
-  "id, nom, entreprise, metier_id, zones, departements, lien, role, statut, notif_email, notif_push, cree_le, charte_version";
+  "id, nom, entreprise, metier_id, metiers, zones, departements, lien, role, statut, notif_email, notif_push, cree_le, charte_version";
 
 // Vue de l'administration (avec e-mail)
 export type MembreAdmin = Omit<Membre, "notif_email" | "notif_push" | "charte_version"> & {

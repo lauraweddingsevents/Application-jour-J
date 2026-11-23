@@ -52,7 +52,7 @@ export function ListeDemandes() {
   const affichees = useMemo(() => {
     if (!demandes || !membre) return [];
     return demandes.filter((d) => {
-      if (f.pourMoi && (d.metier_id !== membre.metier_id || !membre.departements.includes(d.departement))) return false;
+      if (f.pourMoi && (!membre.metiers.includes(d.metier_id) || !membre.departements.includes(d.departement))) return false;
       if (f.zone !== "toutes" && d.zone !== f.zone) return false;
       if (f.departement && d.departement !== f.departement) return false;
       if (f.metier && String(d.metier_id) !== f.metier) return false;
@@ -87,7 +87,7 @@ export function ListeDemandes() {
             f.pourMoi ? "border-or bg-or text-blanc" : "border-or-clair bg-blanc text-encre"
           }`}
         >
-          {f.pourMoi ? "✓ " : ""}Pour moi : {nomMetier(metiers, membre?.metier_id) || "mon métier"} dans mes départements
+          {f.pourMoi ? "✓ " : ""}Pour moi : {membre && membre.metiers.length > 1 ? "mes métiers" : nomMetier(metiers, membre?.metier_id) || "mon métier"} dans mes départements
         </button>
         <button type="button" onClick={() => setPlus(!plus)} className="min-h-[40px] self-start text-sm text-or-fonce underline underline-offset-4">
           {plus ? "Masquer les filtres" : `Plus de filtres${nbFiltres ? ` (${nbFiltres})` : ""}`}

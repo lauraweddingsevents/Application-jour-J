@@ -32,6 +32,7 @@ export type Positionne = {
   nom: string;
   entreprise: string;
   metier_id: number | null;
+  metiers?: number[];
   lien: string;
   email: string;
   message: string;

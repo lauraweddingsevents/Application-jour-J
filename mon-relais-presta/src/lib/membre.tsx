@@ -61,3 +61,8 @@ export function useMembre() {
 export function nomMetier(metiers: Metier[], id: number | null | undefined) {
   return metiers.find((m) => m.id === id)?.nom ?? "";
 }
+
+// « DJ · Musiciens » : tous les métiers d'un membre
+export function nomsMetiers(metiers: Metier[], ids: (number | null)[] | null | undefined) {
+  return (ids ?? []).map((id) => nomMetier(metiers, id)).filter(Boolean).join(" · ");
+}
