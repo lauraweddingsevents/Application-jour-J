@@ -309,7 +309,7 @@ function EspaceAuteur({ d, maintenant, agir, metierDe }: { d: DetailDemande; mai
         <h2 className="font-medium">Prestataires positionnés</h2>
         {actifs.length === 0 && <p className="text-encre-doux">Personne pour le moment. Vous serez prévenu(e) dès qu&apos;un membre se positionne.</p>}
         {actifs.map((p) => (
-          <FichePositionne key={p.membre_id} p={p} metier={metierDe(p.metier_id)} parAuteur={d.mode_coordonnees === "par_auteur"} maintenant={maintenant} />
+          <FichePositionne key={p.membre_id} p={p} metier={(p.metiers?.length ? p.metiers : [p.metier_id]).map(metierDe).filter(Boolean).join(" · ")} parAuteur={d.mode_coordonnees === "par_auteur"} maintenant={maintenant} />
         ))}
         {retires.length > 0 && (
           <p className="text-xs text-encre-doux">

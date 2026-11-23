@@ -15,7 +15,7 @@
 1. supabase.com → « New project » → nom `mon-relais-presta`, région **Europe (Paris)**,
    choisir un mot de passe de base de données (à garder précieusement).
 2. **SQL Editor** → exécuter, dans l'ordre, chaque fichier de `supabase/migrations/`
-   (`0001` à `0005` : copier-coller le contenu, puis « Run »).
+   (`0001` à `0006` : copier-coller le contenu, puis « Run »).
 3. **Authentication → Sign In / Providers → Email** : laisser « Email » activé.
 4. **Authentication → URL Configuration** : « Site URL » = l'adresse Vercel
    (étape 2), et ajouter `https://votre-adresse/**` dans « Redirect URLs ».

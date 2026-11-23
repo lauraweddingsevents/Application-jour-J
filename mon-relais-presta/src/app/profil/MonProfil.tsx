@@ -30,7 +30,7 @@ export function MonProfil() {
             <div className="flex flex-col gap-3">
               <h2 className="text-sm font-medium">Notifications</h2>
               <Case id="notif-email" coche={notifEmail} onChange={(v) => { setNotifEmail(v); setEnregistre(false); }}>
-                Recevoir les e-mails (nouvelles demandes pour mon métier et mes départements, suivi de mes demandes)
+                Recevoir les e-mails (nouvelles demandes pour mes métiers et mes départements, suivi de mes demandes)
               </Case>
               <Case id="notif-push" coche={notifPush} onChange={(v) => { setNotifPush(v); setEnregistre(false); }}>
                 Recevoir les notifications sur mon téléphone
@@ -42,7 +42,7 @@ export function MonProfil() {
             const { error } = await supabaseNavigateur().rpc("modifier_profil", {
               p_nom: v.nom,
               p_entreprise: v.entreprise,
-              p_metier_id: v.metier_id,
+              p_metiers: v.metiers,
               p_zones: v.zones,
               p_departements: v.departements,
               p_lien: v.lien,

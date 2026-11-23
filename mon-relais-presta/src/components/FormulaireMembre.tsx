@@ -2,7 +2,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Bouton } from "@/components/ui/Bouton";
 import { Champ } from "@/components/ui/Champ";
-import { Liste } from "@/components/ui/Liste";
 import { Puces } from "@/components/ui/Puces";
 import { useMembre } from "@/lib/membre";
 import { DEPARTEMENTS, ZONES, type Zone } from "@/lib/zones";
@@ -10,7 +9,7 @@ import { DEPARTEMENTS, ZONES, type Zone } from "@/lib/zones";
 export type ValeursMembre = {
   nom: string;
   entreprise: string;
-  metier_id: number | null;
+  metiers: number[];
   zones: Zone[];
   departements: string[];
   lien: string;
@@ -49,7 +48,8 @@ export function FormulaireMembre({
   async function envoyer(e: FormEvent) {
     e.preventDefault();
     setErreur("");
-    if (!v.metier_id) return setErreur("Choisissez votre métier.");
+    if (v.metiers.length === 0) return setErreur("Choisissez au moins un métier.");
+    if (v.metiers.length > 6) return setErreur("6 métiers au maximum.");
     if (v.zones.length === 0) return setErreur("Choisissez au moins une zone.");
     if (v.departements.length === 0) return setErreur("Choisissez au moins un département couvert.");
     setEnCours(true);
@@ -64,13 +64,15 @@ export function FormulaireMembre({
         value={v.nom} onChange={(e) => maj("nom", e.target.value)} />
       <Champ id="entreprise" libelle="Entreprise" autoComplete="organization" maxLength={100}
         value={v.entreprise} onChange={(e) => maj("entreprise", e.target.value)} />
-      <Liste id="metier" libelle="Mon métier" required value={v.metier_id ?? ""}
-        onChange={(e) => maj("metier_id", e.target.value ? Number(e.target.value) : null)}>
-        <option value="">Choisir…</option>
-        {metiers.filter((m) => m.actif || m.id === v.metier_id).map((m) => (
-          <option key={m.id} value={m.id}>{m.nom}</option>
-        ))}
-      </Liste>
+      <Puces<string>
+        libelle="Mes métiers"
+        aide={v.metiers.length > 1
+          ? `Métier principal (affiché en premier) : ${metiers.find((m) => m.id === v.metiers[0])?.nom ?? ""}. Vous recevrez les demandes de tous vos métiers.`
+          : "Vous pouvez en choisir plusieurs (ex. DJ et chanteuse). Le premier choisi est votre métier principal."}
+        options={metiers.filter((m) => m.actif || v.metiers.includes(m.id)).map((m) => ({ valeur: String(m.id), texte: m.nom }))}
+        valeurs={v.metiers.map(String)}
+        onChange={(x) => maj("metiers", x.map(Number))}
+      />
       <Puces<Zone>
         libelle="Ma communauté"
         options={ZONES.map((z) => ({ valeur: z.code, texte: `${z.communaute} · ${z.nom}` }))}

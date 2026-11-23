@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { BoutonLien } from "@/components/ui/Bouton";
 import { Carte } from "@/components/ui/Carte";
 import { Signaler } from "@/components/Signaler";
-import { useMembre, nomMetier } from "@/lib/membre";
+import { useMembre, nomsMetiers } from "@/lib/membre";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { libelleDepartement, ZONES } from "@/lib/zones";
 
@@ -12,6 +12,7 @@ type Fiche = {
   nom: string;
   entreprise: string;
   metier_id: number | null;
+  metiers?: number[];
   zones: string[];
   departements: string[];
   lien: string;
@@ -54,7 +55,7 @@ export function FicheMembre({ id }: { id: string }) {
         </span>
         <h1 className="text-2xl font-light">{f.nom}</h1>
         {f.entreprise && <p className="text-encre-doux">{f.entreprise}</p>}
-        <p className="font-medium text-or-fonce">{nomMetier(metiers, f.metier_id)}</p>
+        <p className="font-medium text-or-fonce">{nomsMetiers(metiers, f.metiers?.length ? f.metiers : [f.metier_id])}</p>
         {f.lien && (
           <a href={adresseLien(f.lien)} target="_blank" rel="noopener noreferrer" className="break-all text-or-fonce underline underline-offset-4">
             {f.lien}

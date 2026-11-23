@@ -71,3 +71,8 @@
   WhatsApp pré-rempli), rappel 15 jours après transmission (signée ou non ?).
 - Chaque membre peut couper les e-mails et/ou les push dans « Mon profil ».
 - Les e-mails ne contiennent jamais les coordonnées des mariés (seulement un lien).
+
+## Plusieurs métiers par membre
+- Un membre peut choisir de 1 à 6 métiers (ex. DJ et chanteuse). Le premier choisi est son
+  métier principal (affiché en premier). Il reçoit les nouvelles demandes de tous ses métiers,
+  et le filtre « Pour moi » les inclut tous.

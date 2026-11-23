@@ -15,6 +15,7 @@ type MembreN = {
   admin_zones: string[];
   zones: string[];
   metier_id: number | null;
+  metiers: number[];
   departements: string[];
   notif_email: boolean;
   notif_push: boolean;
@@ -34,7 +35,7 @@ type DemandeN = {
 };
 type Evenement = { id: number; type: string; demande_id: string | null; membre_id: string | null; donnees: Record<string, unknown> };
 
-const COL_MEMBRE = "id, email, nom, statut, role, admin_zones, zones, metier_id, departements, notif_email, notif_push";
+const COL_MEMBRE = "id, email, nom, statut, role, admin_zones, zones, metier_id, metiers, departements, notif_email, notif_push";
 const COL_DEMANDE = "id, auteur_id, date_mariage, departement, lieu, metier_id, invites, budget, note, mode_coordonnees, statut";
 
 class Contexte {
@@ -101,7 +102,7 @@ async function traiterEvenement(c: Contexte, e: Evenement) {
         .from("membres")
         .select(COL_MEMBRE)
         .eq("statut", "valide")
-        .eq("metier_id", d.metier_id)
+        .contains("metiers", [d.metier_id])
         .contains("departements", [d.departement])
         .neq("id", d.auteur_id);
       const auteur = await c.membre(d.auteur_id);
@@ -215,7 +216,7 @@ async function traiterEvenement(c: Contexte, e: Evenement) {
         {
           sujet: `Nouvelle inscription à valider : ${m.nom}`,
           titre: "Nouvelle inscription à valider",
-          paragraphes: [`${m.nom} · ${c.metier(m.metier_id)}`, `Départements : ${m.departements.map(libelleDepartement).join(", ")}`],
+          paragraphes: [`${m.nom} · ${(m.metiers?.length ? m.metiers : [m.metier_id]).map((x) => c.metier(x)).join(", ")}`, `Départements : ${m.departements.map(libelleDepartement).join(", ")}`],
           bouton: { texte: "Valider les inscriptions", url: `${CONFIG.site}/admin` },
         },
         { titre: "Inscription à valider", texte: m.nom, url: "/admin" },
