@@ -27,7 +27,7 @@ type DemandeN = {
   departement: string;
   lieu: string;
   metier_id: number;
-  invites: number;
+  invites: number | null;
   budget: number | null;
   note: string;
   mode_coordonnees: string;
@@ -114,7 +114,7 @@ async function traiterEvenement(c: Contexte, e: Evenement) {
           paragraphes: [
             `📅 ${dateCourte(d.date_mariage)}`,
             `📍 ${d.lieu} · ${libelleDepartement(d.departement)}`,
-            `👥 ${d.invites} invités${d.budget != null ? ` · budget ${d.budget.toLocaleString("fr-FR")} €` : ""}`,
+            [d.invites ? `👥 ${d.invites} invités` : "", d.budget != null ? `budget ${d.budget.toLocaleString("fr-FR")} €` : ""].filter(Boolean).join(" · "),
             d.note ? `« ${d.note} »` : "",
             `Transmise par ${auteur?.nom ?? "un membre"}. 3 prestataires au maximum peuvent se positionner.`,
           ].filter(Boolean),

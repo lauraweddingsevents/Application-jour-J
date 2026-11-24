@@ -29,6 +29,7 @@ type Valeurs = {
   telephone: string;
   email: string;
   accord: boolean;
+  informes: boolean;
 };
 
 // Déposer une demande (aussi : modifier, ou dupliquer pour un autre métier)
@@ -52,6 +53,7 @@ export function FormulaireDemande() {
     telephone: "",
     email: "",
     accord: false,
+    informes: false,
   });
   const [source, setSource] = useState<DetailDemande | null>(null);
   const [pret, setPret] = useState(!idModif && !idSource);
@@ -76,7 +78,7 @@ export function FormulaireDemande() {
           departement: d.departement,
           lieu: d.lieu,
           metier: idModif ? String(d.metier_id) : "",
-          invites: String(d.invites),
+          invites: d.invites != null ? String(d.invites) : "",
           budget: d.budget != null ? String(d.budget) : "",
           note: d.note,
           mode: d.mode_coordonnees,
@@ -84,6 +86,7 @@ export function FormulaireDemande() {
           telephone: d.coordonnees?.telephone ?? "",
           email: d.coordonnees?.email ?? "",
           accord: true,
+          informes: true,
         });
         setPret(true);
       });
@@ -102,13 +105,14 @@ export function FormulaireDemande() {
     if (v.mode === "renseignees" && !v.telephone.trim() && !v.email.trim())
       return setErreur("Indiquez au moins le téléphone ou l'e-mail des mariés.");
     if (!v.accord) return setErreur("Cochez la case : les mariés doivent être d'accord.");
+    if (!v.informes) return setErreur("Cochez la case : les mariés doivent être informés que leurs coordonnées seront transmises à des prestataires de confiance.");
 
     const commun = {
       p_date: v.date,
       p_departement: v.departement,
       p_lieu: v.lieu,
       p_metier_id: Number(v.metier),
-      p_invites: Number(v.invites),
+      p_invites: v.invites ? Number(v.invites) : null,
       p_budget: v.budget ? Number(v.budget) : null,
       p_note: v.note,
       p_mode: v.mode,
@@ -182,7 +186,7 @@ export function FormulaireDemande() {
             placeholder="Ex. Aix-en-Provence, Château de…" value={v.lieu} onChange={(e) => maj("lieu", e.target.value)} />
 
           <div className="grid grid-cols-2 gap-3">
-            <Champ id="invites" libelle="Nombre d'invités" type="number" inputMode="numeric" required min={1} max={3000}
+            <Champ id="invites" libelle="Nombre d'invités" placeholder="Facultatif" type="number" inputMode="numeric" min={1} max={3000}
               value={v.invites} onChange={(e) => maj("invites", e.target.value)} />
             <Champ id="budget" libelle="Budget (€)" placeholder="Facultatif" type="number" inputMode="numeric" min={0}
               value={v.budget} onChange={(e) => maj("budget", e.target.value)} />
@@ -220,6 +224,9 @@ export function FormulaireDemande() {
 
           <Case id="accord" coche={v.accord} onChange={(x) => maj("accord", x)}>
             Les mariés sont d&apos;accord pour que leurs coordonnées soient transmises.
+          </Case>
+          <Case id="informes" coche={v.informes} onChange={(x) => maj("informes", x)}>
+            Les mariés sont informés que leurs coordonnées seront transmises à des prestataires de confiance.
           </Case>
 
           {erreur && <p className="text-sm text-alerte">{erreur}</p>}
