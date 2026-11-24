@@ -76,3 +76,9 @@
 - Un membre peut choisir de 1 à 6 métiers (ex. DJ et chanteuse). Le premier choisi est son
   métier principal (affiché en premier). Il reçoit les nouvelles demandes de tous ses métiers,
   et le filtre « Pour moi » les inclut tous.
+
+## Retours des membres (novembre 2026)
+- Nombre d'invités facultatif (souvent inconnu au moment de la demande) ; affiché
+  « non précisé » quand il manque.
+- Deuxième case obligatoire avant de déposer : « Les mariés sont informés que leurs
+  coordonnées seront transmises à des prestataires de confiance ».

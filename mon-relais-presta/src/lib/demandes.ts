@@ -15,7 +15,7 @@ export type LigneDemande = {
   zone: string;
   lieu: string;
   metier_id: number;
-  invites: number;
+  invites: number | null;
   budget: number | null;
   note: string;
   mode_coordonnees: ModeCoordonnees;
@@ -50,7 +50,7 @@ export type DetailDemande = {
   zone: string;
   lieu: string;
   metier_id: number;
-  invites: number;
+  invites: number | null;
   budget: number | null;
   note: string;
   mode_coordonnees: ModeCoordonnees;
@@ -145,6 +145,11 @@ export function aujourdhuiIso() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// Nombre d'invités (facultatif)
+export function texteInvites(n: number | null | undefined) {
+  return n ? `${n} invités` : "Invités : non précisé";
+}
+
 export function euros(n: number) {
   return n.toLocaleString("fr-FR") + " €";
 }
@@ -159,12 +164,12 @@ export function adresseDemande(id: string) {
 }
 
 // Message court pour WhatsApp (sans aucune coordonnée des mariés)
-export function messageWhatsApp(d: { id: string; date_mariage: string; departement: string; lieu: string; invites: number }, metier: string, relance = false) {
+export function messageWhatsApp(d: { id: string; date_mariage: string; departement: string; lieu: string; invites: number | null }, metier: string, relance = false) {
   const debut = relance ? "🔁 Toujours personne pour cette demande !" : "💍 Demande de mariés à transmettre";
   return [
     `${debut}`,
     `${metier} · ${dateCourte(d.date_mariage)}`,
-    `📍 ${d.lieu} (${d.departement}) · ${d.invites} invités`,
+    `📍 ${d.lieu} (${d.departement})${d.invites ? ` · ${d.invites} invités` : ""}`,
     `Qui est dispo ? 👉 ${adresseDemande(d.id)}`,
   ].join("\n");
 }

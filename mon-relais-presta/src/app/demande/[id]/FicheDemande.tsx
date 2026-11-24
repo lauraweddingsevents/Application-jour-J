@@ -91,7 +91,7 @@ export function FicheDemande({ id }: { id: string }) {
         <p className="text-lg font-medium text-or-fonce">{dateLongue(d.date_mariage)}</p>
         <dl className="flex flex-col gap-1.5">
           <Ligne titre="Lieu">{d.lieu} · {dep ? `${dep.code} · ${dep.nom}` : d.departement}</Ligne>
-          <Ligne titre="Invités">{d.invites}</Ligne>
+          <Ligne titre="Invités">{d.invites ?? "Non précisé"}</Ligne>
           {d.budget != null && <Ligne titre="Budget">{euros(d.budget)}</Ligne>}
           <Ligne titre="Transmise par">
             <Link href={`/membre/${d.auteur.id}`} className="text-or-fonce underline underline-offset-4">{d.auteur.nom}</Link>

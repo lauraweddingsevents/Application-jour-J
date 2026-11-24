@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Pastille } from "@/components/demandes/Pastille";
-import { dateCourte, depart, euros, PLACES_MAX, type LigneDemande } from "@/lib/demandes";
+import { dateCourte, depart, euros, texteInvites, PLACES_MAX, type LigneDemande } from "@/lib/demandes";
 
 // Une demande dans la liste : l'essentiel en un coup d'œil
 export function CarteDemande({ d, metier, moi }: { d: LigneDemande; metier: string; moi?: string }) {
@@ -21,7 +21,7 @@ export function CarteDemande({ d, metier, moi }: { d: LigneDemande; metier: stri
         📍 {d.lieu} <span className="text-encre-doux">· {dep ? `${dep.code} · ${dep.nom}` : d.departement}</span>
       </p>
       <p className="mt-1 text-sm text-encre-doux">
-        {d.invites} invités{d.budget != null && ` · budget ${euros(d.budget)}`}
+        {texteInvites(d.invites)}{d.budget != null && ` · budget ${euros(d.budget)}`}
         {" · "}
         {d.nb_positionnes}/{PLACES_MAX} positionné{d.nb_positionnes > 1 ? "s" : ""}
       </p>
