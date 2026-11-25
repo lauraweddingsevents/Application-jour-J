@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Carte } from "@/components/ui/Carte";
 import { Choix } from "@/components/ui/Choix";
 import { useMembre, nomMetier } from "@/lib/membre";
@@ -16,6 +17,7 @@ type Stats = {
   positionnements: { total: number; retires: number; a_confirmer: number; coordonnees_recues: number; recues_sous_24h: number };
   membres: { valides: number; en_attente: number; suspendus: number; paca: number; rhone_alpes: number };
   meilleurs_donneurs: { id: string; nom: string; donnees: number }[];
+  meilleurs_repondants?: { id: string; nom: string; reponses: number; signees: number }[];
 };
 type Periode = "tout" | "annee" | "90j";
 
@@ -91,6 +93,24 @@ export function Statistiques() {
             </p>
           </Carte>
 
+          <Classement
+            titre="Ceux qui répondent le plus"
+            aide="Nombre de demandes sur lesquelles le membre a cliqué « Je suis dispo » (sans s'être retiré), et combien ont été signées avec lui."
+            lignes={(s.meilleurs_repondants ?? []).map((m) => ({
+              id: m.id,
+              nom: m.nom,
+              valeur: m.reponses,
+              detail: m.signees ? `${m.signees} signée${m.signees > 1 ? "s" : ""}` : "",
+            }))}
+            unite="réponse"
+          />
+          <Classement
+            titre="Ceux qui transmettent le plus"
+            aide="Nombre de demandes déposées pour la communauté (hors annulées)."
+            lignes={s.meilleurs_donneurs.map((m) => ({ id: m.id, nom: m.nom, valeur: m.donnees, detail: "" }))}
+            unite="demande"
+          />
+
           <Carte className="flex flex-col gap-2">
             <h2 className="font-medium">Membres</h2>
             <p>
@@ -100,23 +120,43 @@ export function Statistiques() {
             <p className="text-sm text-encre-doux">
               {s.membres.en_attente} en attente de validation · {s.membres.suspendus} suspendu{s.membres.suspendus > 1 ? "s" : ""}
             </p>
-            {s.meilleurs_donneurs.length > 0 && (
-              <>
-                <h3 className="mt-2 text-sm font-medium">Ceux qui transmettent le plus</h3>
-                <ol className="flex flex-col gap-1">
-                  {s.meilleurs_donneurs.map((m, i) => (
-                    <li key={m.id} className="flex justify-between gap-2 text-sm">
-                      <span>{i + 1}. {m.nom}</span>
-                      <span className="tabular-nums text-encre-doux">{m.donnees}</span>
-                    </li>
-                  ))}
-                </ol>
-              </>
-            )}
+
           </Carte>
         </>
       )}
     </div>
+  );
+}
+
+// Classement des membres (lien vers leur fiche)
+function Classement({ titre, aide, lignes, unite }: {
+  titre: string;
+  aide: string;
+  lignes: { id: string; nom: string; valeur: number; detail: string }[];
+  unite: string;
+}) {
+  return (
+    <Carte className="flex flex-col gap-2">
+      <h2 className="font-medium">{titre}</h2>
+      <p className="text-sm text-encre-doux">{aide}</p>
+      {lignes.length === 0 ? (
+        <p className="text-sm text-encre-doux">Personne sur la période.</p>
+      ) : (
+        <ol className="flex flex-col">
+          {lignes.map((l, i) => (
+            <li key={l.id} className="flex min-h-[44px] items-center justify-between gap-2 border-t border-or-clair/40 text-sm">
+              <Link href={`/membre/${l.id}`} className="underline-offset-4 hover:underline">
+                {i + 1}. {l.nom}
+              </Link>
+              <span className="shrink-0 text-right tabular-nums">
+                {l.valeur} {unite}{l.valeur > 1 ? "s" : ""}
+                {l.detail && <span className="block text-xs text-succes">{l.detail}</span>}
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </Carte>
   );
 }
 
