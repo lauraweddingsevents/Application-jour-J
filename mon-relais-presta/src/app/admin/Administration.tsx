@@ -5,6 +5,7 @@ import { Carte } from "@/components/ui/Carte";
 import { Champ } from "@/components/ui/Champ";
 import Link from "next/link";
 import { Statistiques } from "./Statistiques";
+import { DemandesAdmin } from "./DemandesAdmin";
 import { useMembre, nomMetier, nomsMetiers } from "@/lib/membre";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { messageErreur } from "@/lib/erreurs";
@@ -12,7 +13,7 @@ import { notifier } from "@/lib/notifier";
 import { libelleDepartement, nomZone, ZONES, type Zone } from "@/lib/zones";
 import type { MembreAdmin, StatutMembre } from "@/lib/types";
 
-type Onglet = "statistiques" | "inscriptions" | "membres" | "signalements" | "metiers" | "charte";
+type Onglet = "statistiques" | "demandes" | "inscriptions" | "membres" | "signalements" | "metiers" | "charte";
 
 export function Administration() {
   const [onglet, setOnglet] = useState<Onglet>("statistiques");
@@ -22,6 +23,7 @@ export function Administration() {
       <nav className="flex flex-wrap gap-2" aria-label="Rubriques">
         {([
           ["statistiques", "Statistiques"],
+          ["demandes", "Demandes"],
           ["inscriptions", "À valider"],
           ["membres", "Membres"],
           ["signalements", "Signalements"],
@@ -36,6 +38,7 @@ export function Administration() {
       </nav>
       {(onglet === "inscriptions" || onglet === "membres") && <Membres enAttente={onglet === "inscriptions"} />}
       {onglet === "statistiques" && <Statistiques />}
+      {onglet === "demandes" && <DemandesAdmin />}
       {onglet === "signalements" && <Signalements />}
       {onglet === "metiers" && <Metiers />}
       {onglet === "charte" && <EditionCharte />}

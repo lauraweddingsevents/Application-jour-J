@@ -82,3 +82,10 @@
   « non précisé » quand il manque.
 - Deuxième case obligatoire avant de déposer : « Les mariés sont informés que leurs
   coordonnées seront transmises à des prestataires de confiance ».
+
+## Suivi des réponses par l'administration
+- Rubrique « Demandes » (administration) : chaque demande avec les membres qui ont cliqué
+  « Je suis dispo » (date, message, retrait, coordonnées reçues, signée avec qui).
+  Filtres : toutes, sans réponse, en cours, signées. Jamais les coordonnées des mariés.
+- Statistiques : classements « Ceux qui répondent le plus » (réponses sans retrait,
+  et combien signées) et « Ceux qui transmettent le plus » (10 premiers chacun).
