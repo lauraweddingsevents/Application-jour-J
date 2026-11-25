@@ -73,6 +73,19 @@ export function Intervenants({ mariage }: { mariage: Mariage }) {
 
       <Feuille titre="Envoyer son lien" ouverte={partage !== null} onFermer={fermerPartage}>
         {partage && <Partage intervenant={partage} mariage={mariage} />}
+        {partage && (
+          <button
+            type="button"
+            onClick={() => {
+              const i = partage;
+              setPartage(null);
+              setEdition(i);
+            }}
+            className="mt-6 min-h-[44px] w-full text-center text-sm text-encre-doux underline underline-offset-4"
+          >
+            Modifier ou supprimer {partage.nom}
+          </button>
+        )}
       </Feuille>
 
       <Feuille

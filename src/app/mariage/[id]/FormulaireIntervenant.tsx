@@ -177,13 +177,16 @@ export function FormulaireIntervenant({
 
       {onSupprimer &&
         (!confirmer ? (
-          <Bouton type="button" variante="discret" onClick={() => setConfirmer(true)}>
-            Supprimer cet intervenant
+          <Bouton type="button" variante="secondaire" className="mt-2 !border-alerte/40 text-alerte" onClick={() => setConfirmer(true)}>
+            🗑 Supprimer l&apos;intervenant et son lien
           </Bouton>
         ) : (
-          <div className="flex flex-col gap-2 rounded-2xl bg-blanc p-4 text-center">
+          <div className="mt-2 flex flex-col gap-2 rounded-2xl bg-blanc p-4 text-center ring-2 ring-alerte/40">
             <p className="text-sm">
-              Supprimer définitivement ? Son lien ne fonctionnera plus.
+              Supprimer <strong>{i.nom || "cet intervenant"}</strong> définitivement ?
+            </p>
+            <p className="text-sm text-encre-doux">
+              Son lien ne fonctionnera plus, immédiatement, et il sera retiré de tous les moments du déroulé.
             </p>
             <Bouton type="button" variante="danger" disabled={enCours} onClick={() => agir(onSupprimer)}>
               Oui, supprimer
