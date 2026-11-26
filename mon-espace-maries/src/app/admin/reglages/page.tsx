@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Bouton, Carte, Champ, Chargement, EnTetePage, MessageErreur, MessageSucces, TitreCarte } from "@/components/ui";
 import { ActiverPush } from "@/components/ActiverPush";
+import { ClesNotifications } from "@/components/ClesNotifications";
 import { exiger, useDonnees } from "@/lib/espace";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 import { messageErreur } from "@/lib/erreurs";
@@ -20,6 +21,7 @@ export default function Reglages() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-start">
         {donnees ? <LiensAvis initial={donnees} /> : !erreur && <Chargement />}
         <div className="flex flex-col gap-4">
+          <ClesNotifications />
           <ActiverPush t={dico("fr").notifications} />
           <Carte className="flex flex-col gap-1.5 text-sm">
             <TitreCarte>Alertes reçues</TitreCarte>
