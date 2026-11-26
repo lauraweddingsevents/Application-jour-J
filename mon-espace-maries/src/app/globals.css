@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/*
+  Charte graphique Mon Espace Mariés (couleurs provisoires de la maquette).
+  Pour appliquer les codes exacts de la charte : changer les valeurs ci-dessous,
+  tout le reste de l'appli suit automatiquement.
+*/
+@theme {
+  --color-fond: #f5eee4;          /* beige : fond des pages */
+  --color-carte: #fffdf9;         /* blanc cassé : cartes */
+  --color-trait: #e6dcce;         /* bordures des cartes */
+  --color-trait-fin: #f0e8dd;     /* séparateurs */
+  --color-champ: #d9ccbc;         /* bordures des champs */
+  --color-piste: #eee5d9;         /* fond des barres de progression */
+  --color-encre: #2b1d1f;         /* texte */
+  --color-doux: #6e5f5a;          /* texte secondaire */
+  --color-bordeaux: #6b1e2e;      /* titres, boutons */
+  --color-bordeaux-fonce: #4a1320;
+  --color-bordeaux-pale: #efe2e4;
+  --color-tangerine: #e07b39;     /* progression, pastilles */
+
+  /* Statuts */
+  --color-vert: #2f5b3a;
+  --color-vert-pale: #e4efe6;
+  --color-orange: #8a4313;
+  --color-orange-pale: #fbe6d6;
+  --color-rouge: #9a3328;
+  --color-rouge-pale: #f6dedb;
+  --color-neutre-pale: #eee7de;
+
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-titre: var(--font-cormorant), Georgia, serif;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--color-fond);
+  color: var(--color-encre);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--color-bordeaux-pale);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-tangerine);
+  outline-offset: 2px;
+}
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+/* Barre d'onglets du bas : laisse la place à la barre système de l'iPhone */
+.marge-basse {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+  .sans-impression {
+    display: none !important;
+  }
+}
