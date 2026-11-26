@@ -49,6 +49,7 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a2', 'julien@exemple.fr'),
   ('00000000-0000-0000-0000-0000000000b1', 'ines@exemple.fr');
 
+select set_config('test.b', :'b', false);
 -- ---------- Camille (Organisation complète) ----------
 set role authenticated;
 select pg_temp.en_tant_que('00000000-0000-0000-0000-0000000000a1');
@@ -89,8 +90,11 @@ end $$;
 -- ---------- Julien ne voit pas encore la réponse de Camille ----------
 select pg_temp.en_tant_que('00000000-0000-0000-0000-0000000000a2');
 select pg_temp.verifier((select count(*) from reponses) = 0, 'Julien ne voit pas la réponse de Camille avant d''avoir répondu');
-insert into reponses (question_id, personne_id, couple_id, texte)
-  select id, ma_personne(), couple_id, 'Festif, simple' from questions where ordre = 1;
+select pg_temp.verifier((select count(*) from qui_a_repondu(mon_couple())) = 1, 'Julien sait que Camille a répondu (sans voir la réponse)');
+select pg_temp.verifier((select count(*) from qui_a_repondu(current_setting('test.b')::uuid)) = 0, 'aucune information sur un autre couple');
+select repondre(id, 'Festif', '{}', '') from questions where ordre = 1;
+select repondre(id, 'Festif, simple', '{}', '') from questions where ordre = 1;
+select pg_temp.verifier((select texte from reponses where personne_id = ma_personne()) = 'Festif, simple', 'réponse modifiable par son auteur');
 select pg_temp.verifier((select count(*) from reponses) = 2, 'après avoir répondu, Julien voit les deux réponses');
 
 -- ---------- Inès (Coordination) ----------

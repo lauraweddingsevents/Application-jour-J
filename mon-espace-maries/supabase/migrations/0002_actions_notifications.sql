@@ -85,6 +85,29 @@ begin
   if not found then raise exception 'Tâche introuvable' using errcode = 'P0001'; end if;
 end $$;
 
+-- Répondre (ou modifier sa réponse) à une question du questionnaire
+create or replace function public.repondre(p_question uuid, p_texte text, p_choix text[], p_sous_reponse text)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_couple uuid := mon_couple();
+begin
+  if v_couple is null or not exists (select 1 from questions where id = p_question and couple_id = v_couple) then
+    raise exception 'Question introuvable' using errcode = 'P0001';
+  end if;
+  insert into reponses (question_id, personne_id, couple_id, texte, choix, sous_reponse)
+  values (p_question, ma_personne(), v_couple, left(coalesce(p_texte, ''), 3000), coalesce(p_choix, '{}'), left(coalesce(p_sous_reponse, ''), 1000))
+  on conflict (question_id, personne_id) do update
+    set texte = excluded.texte, choix = excluded.choix, sous_reponse = excluded.sous_reponse;
+end $$;
+
+-- Qui a répondu à quelle question (sans le contenu) : « Julien a répondu, à vous ! »
+create or replace function public.qui_a_repondu(p_couple uuid)
+returns table (question_id uuid, personne_id uuid)
+language sql stable security definer set search_path = public as $$
+  select r.question_id, r.personne_id from reponses r
+  where r.couple_id = p_couple and acces_couple(p_couple)
+    and (r.texte <> '' or cardinality(r.choix) > 0);
+$$;
+
 -- Marquer les notifications comme lues
 create or replace function public.marquer_notifications_lues()
 returns void language sql security definer set search_path = public as $$
@@ -273,7 +296,7 @@ revoke execute on all functions in schema public from public, anon;
 grant execute on function public.adresse_connue to anon, authenticated;
 grant execute on function public.est_admin, public.mon_couple, public.ma_personne, public.acces_couple,
   public.en_coordination, public.peut_editer, public.album_ouvert, public.j_ai_repondu,
-  public.creer_couple, public.ajouter_marie, public.declarer_virement, public.cocher_tache,
+  public.qui_a_repondu, public.repondre, public.creer_couple, public.ajouter_marie, public.declarer_virement, public.cocher_tache,
   public.marquer_notifications_lues, public.enregistrer_push, public.supprimer_push to authenticated;
 revoke execute on function public.notifier, public.prendre_notifications, public.creer_rappels_taches,
   public.creer_rappels_rdv, public.creer_notifications_album, public.couples_a_supprimer from authenticated;

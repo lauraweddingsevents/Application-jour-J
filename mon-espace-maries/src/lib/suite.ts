@@ -1,11 +1,11 @@
 // Page où revenir après la connexion (« ?suite=/demandes »), en n'acceptant
 // que des adresses internes au site.
-export function suiteSure(valeur: string | null | undefined, parDefaut = "/demandes") {
+export function suiteSure(valeur: string | null | undefined, parDefaut = "/") {
   if (!valeur || !valeur.startsWith("/") || valeur.startsWith("//")) return parDefaut;
   return valeur;
 }
 
-export function lireSuite(parDefaut = "/demandes") {
+export function lireSuite(parDefaut = "/") {
   if (typeof window === "undefined") return parDefaut;
   return suiteSure(new URLSearchParams(window.location.search).get("suite"), parDefaut);
 }
