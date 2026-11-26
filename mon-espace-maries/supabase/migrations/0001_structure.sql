@@ -4,12 +4,12 @@
 -- Projet Supabase propre à cette application (région Europe, Paris).
 -- =====================================================================
 
-create extension if not exists pgcrypto;
-
--- Code aléatoire difficile à deviner (QR code de la page invités)
+-- Code aléatoire difficile à deviner (QR code de la page invités), lettres et chiffres
 create or replace function public.nouveau_jeton(longueur int default 16)
 returns text language sql volatile set search_path = public as $$
-  select substr(translate(encode(gen_random_bytes(24), 'base64'), '+/=', 'xyz'), 1, longueur);
+  select substr(translate(
+    encode(uuid_send(gen_random_uuid()), 'base64') || encode(uuid_send(gen_random_uuid()), 'base64'),
+    '+/=', 'xyz'), 1, longueur);
 $$;
 
 -- ---------------------------------------------------------------------
