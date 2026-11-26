@@ -53,5 +53,7 @@ export function usePersonne() {
 
 export async function seDeconnecter() {
   await supabaseNavigateur().auth.signOut();
+  // Rechargement complet volontaire : efface tout ce qui était affiché de l'espace
+  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
   window.location.href = "/connexion";
 }

@@ -73,7 +73,7 @@ begin
   if e.statut <> 'a_venir' then return; end if;
   update echeances set statut = 'a_confirmer', declare_le = now() where id = p_echeance;
   perform notifier(e.couple_id, true, 'virement_declare',
-    jsonb_build_object('libelle', e.libelle, 'montant', e.montant), '/admin/couple/' || e.couple_id || '?partie=echeancier');
+    jsonb_build_object('libelle', e.libelle, 'montant', e.montant), '/admin/couple/' || e.couple_id || '?partie=paiements');
 end $$;
 
 -- Le couple coche ou décoche une tâche

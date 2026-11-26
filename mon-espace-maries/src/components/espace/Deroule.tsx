@@ -2,9 +2,8 @@
 import { Carte, Chargement, EnTetePage, Vide } from "@/components/ui";
 import { useDonnees, useEspace } from "@/lib/espace";
 import { derouleDefinitif, formatDate, formatHeure } from "@/lib/calculs";
+import type { ReponseDeroule } from "@/lib/deroule";
 
-export type MomentDeroule = { id: string; titre: string; debut: string; fin: string | null; lieu: string | null; journee: string };
-export type ReponseDeroule = { disponible: boolean; moments: MomentDeroule[]; jours: { date: string; titre: string | null }[] };
 
 // Repris de Ma Coordo, en lecture seule, à chaque ouverture
 export function Deroule() {

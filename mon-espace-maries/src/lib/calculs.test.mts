@@ -5,6 +5,7 @@ import {
   joursAvant, ouvertureAlbum, prochaineEcheance, soldeTropTard, statutEtape, totauxBudget, totauxPaiements,
   dateSuppression, versInstant, ajouterMois,
 } from "./calculs.ts";
+import { convertirDeroule, jetonMaCoordo } from "./deroule.ts";
 
 let n = 0;
 function test(nom: string, f: () => void) {
@@ -89,6 +90,23 @@ test("heures et saisie de rendez-vous", () => {
   assert.equal(formatHeure("2027-07-12T12:30:00Z", "en"), "2:30 pm");
   assert.equal(versInstant("2027-07-12", "14:30"), "2027-07-12T12:30:00.000Z");
   assert.deepEqual(depuisInstant("2027-07-12T12:30:00.000Z"), { date: "2027-07-12", heure: "14:30" });
+});
+
+test("lien Ma Coordo et déroulé sur plusieurs jours", () => {
+  assert.equal(jetonMaCoordo("https://ma-coordo.vercel.app/j/AbC123xyz"), "AbC123xyz");
+  assert.equal(jetonMaCoordo("https://ma-coordo.vercel.app/j/AbC123xyz?x=1"), "AbC123xyz");
+  assert.equal(jetonMaCoordo("https://exemple.fr/tableau"), null);
+  const d = convertirDeroule({
+    mariage: { date_mariage: "2027-09-11" },
+    journees: [{ id: "v", date_jour: "2027-09-10", titre: "Welcome dinner" }],
+    moments: [
+      { id: "2", titre: "Soirée", debut: "2027-09-11T23:30:00Z", fin: null, lieu: "Salle", journee_id: null },
+      { id: "1", titre: "Cérémonie", debut: "2027-09-11T12:00:00Z", fin: null, lieu: "Mairie", journee_id: null },
+      { id: "0", titre: "Dîner", debut: "2027-09-10T18:00:00Z", fin: null, lieu: null, journee_id: "v" },
+    ],
+  });
+  assert.deepEqual(d.moments.map((m) => [m.titre, m.journee]), [["Dîner", "2027-09-10"], ["Cérémonie", "2027-09-11"], ["Soirée", "2027-09-11"]]);
+  assert.equal(convertirDeroule(null).disponible, false);
 });
 
 console.log(`\n${n} groupes de tests réussis.`);

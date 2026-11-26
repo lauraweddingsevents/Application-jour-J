@@ -82,7 +82,9 @@ export function useDonnees<T>(charger: () => Promise<T>, cles: unknown[]) {
   const [donnees, setDonnees] = useState<T | undefined>(undefined);
   const [erreur, setErreur] = useState("");
   const chargeur = useRef(charger);
-  chargeur.current = charger;
+  useEffect(() => {
+    chargeur.current = charger;
+  });
 
   const recharger = useCallback(async () => {
     try {
@@ -94,7 +96,6 @@ export function useDonnees<T>(charger: () => Promise<T>, cles: unknown[]) {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     recharger();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, cles);

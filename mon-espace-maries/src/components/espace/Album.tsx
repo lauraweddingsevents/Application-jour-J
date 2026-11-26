@@ -39,8 +39,10 @@ function CarteQr() {
 
   useEffect(() => {
     const url = `${window.location.origin}/invites/${couple.jeton_invites}`;
-    setAdresse(url);
-    QRCode.toDataURL(url, { width: 1024, margin: 2, color: { dark: "#2B1D1F", light: "#FFFFFF" } }).then(setImage);
+    QRCode.toDataURL(url, { width: 1024, margin: 2, color: { dark: "#2B1D1F", light: "#FFFFFF" } }).then((img) => {
+      setImage(img);
+      setAdresse(url);
+    });
   }, [couple.jeton_invites]);
 
   function imprimer() {
@@ -59,6 +61,7 @@ img{width:70%;max-width:340px}small{font-family:Helvetica,Arial,sans-serif;font-
 
   return (
     <Carte className="flex flex-col gap-4 sm:flex-row sm:items-center">
+      {/* eslint-disable-next-line @next/next/no-img-element -- image générée dans le navigateur */}
       {image ? <img src={image} alt="QR code" className="size-40 shrink-0 self-center rounded-xl border border-trait bg-white p-2" /> : <div className="size-40 shrink-0 self-center rounded-xl bg-piste" />}
       <div className="flex flex-col gap-2">
         <h2 className="font-titre text-[22px] font-semibold">{ta.qrTitre}</h2>
