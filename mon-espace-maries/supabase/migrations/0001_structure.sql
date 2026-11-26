@@ -455,6 +455,12 @@ alter table public.medias enable row level security;
 alter table public.notifications enable row level security;
 alter table public.abonnements_push enable row level security;
 
+-- Accès des comptes connectés, filtré ensuite par les règles ci-dessous
+-- (explicite : ne dépend pas de l'option « accès API automatique » du projet)
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, update, delete on all tables in schema public to authenticated;
+grant usage, select on all sequences in schema public to authenticated;
+
 -- Personne sans compte : aucun accès direct aux tables
 revoke all on all tables in schema public from anon;
 revoke all on public.abonnements_push from authenticated;
