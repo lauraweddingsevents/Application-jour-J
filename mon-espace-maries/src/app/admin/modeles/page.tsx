@@ -13,7 +13,7 @@ export default function Modeles() {
   return (
     <>
       <EnTetePage titre="Modèles types" intro="Copiés dans chaque nouvel espace à sa création. Les modifier ne change pas les espaces déjà créés." />
-      <div className="grid gap-4 xl:grid-cols-2 xl:items-start">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-start">
         <ListeModele table="modele_etapes" titre="Rétroplanning type" aide="Les étapes qui commencent par « Recherche » reçoivent automatiquement les sous-étapes types." />
         <ListeModele table="modele_sous_etapes" titre="Sous-étapes d'une recherche de prestataire" aide="Ajoutées à chaque nouvelle « Recherche … », y compris en cours d'organisation." />
         <ListeModele table="modele_budget" titre="Budget type" aide="Montant estimé facultatif." avecMontant />

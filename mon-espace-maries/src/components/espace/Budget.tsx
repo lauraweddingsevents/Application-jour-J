@@ -48,22 +48,60 @@ export function Budget() {
           <span className="text-xs text-doux">{tb.totalEstime}</span>
           <span className="font-titre text-[26px] font-semibold leading-tight">{eur(totaux.estime)}</span>
         </Carte>
-        <Carte className="flex flex-col gap-0.5 border-bordeaux bg-bordeaux text-fond">
+        <Carte accent className="flex flex-col gap-0.5">
           <span className="text-xs opacity-85">{tb.totalReajuste}</span>
           <span className="font-titre text-[26px] font-semibold leading-tight">{eur(totaux.reajuste)}</span>
           <span className="text-[11px] opacity-85">{tb.reajusteAide}</span>
         </Carte>
       </div>
 
+      {donnees.length > 0 && (
+        // Téléphone : une ligne par poste, montants en dessous
+        <Carte className="px-4 py-1 sm:hidden">
+          <ul>
+            {donnees.map((p) => {
+              const d = ecart(p);
+              return (
+                <li key={p.id} className="flex flex-col gap-1 border-b border-trait-fin py-2.5 last:border-none">
+                  <div className="flex items-center justify-between gap-2">
+                    {droits.editer ? (
+                      <CelluleTexte valeur={p.nom} libelle={tb.poste} onValider={(v) => agir(() => sb().update({ nom: v }).eq("id", p.id))} />
+                    ) : <span className="text-[15px] font-medium">{p.nom}</span>}
+                    <span className={`whitespace-nowrap text-sm tabular-nums ${d && d > 0 ? "font-semibold text-rouge" : d && d < 0 ? "font-semibold text-vert" : "text-doux"}`}>
+                      {formatEcart(d, langue)}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-[13px] text-doux">
+                    <span className="flex items-center gap-1">{tb.estime}
+                      {droits.editer ? <CelluleMontant valeur={p.estime} libelle={`${tb.estime} – ${p.nom}`} onValider={(v) => modifierMontant(p, "estime", v)} /> : <span className="text-encre tabular-nums">{eur(centimes(p.estime))}</span>}
+                    </span>
+                    <span className="flex items-center gap-1">{tb.reel}
+                      {droits.editer ? <CelluleMontant valeur={p.reel} libelle={`${tb.reel} – ${p.nom}`} onValider={(v) => modifierMontant(p, "reel", v)} /> : <span className="text-encre tabular-nums">{eur(centimes(p.reel))}</span>}
+                    </span>
+                    {droits.editer && (
+                      <button type="button" aria-label={`${t.supprimer} ${p.nom}`} onClick={() => confirm(t.confirmerSuppression) && agir(() => sb().delete().eq("id", p.id))}
+                        className="ml-auto flex size-9 items-center justify-center rounded-lg text-doux hover:text-rouge">×</button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          <div className="flex justify-between border-t border-trait py-3 text-sm font-semibold">
+            <span>Total · {tb.ecart}</span>
+            <span className={totaux.ecart > 0 ? "text-rouge" : totaux.ecart < 0 ? "text-vert" : ""}>{formatEcart(totaux.ecart, langue)}</span>
+          </div>
+        </Carte>
+      )}
       {donnees.length === 0 ? <Vide>{tb.vide}</Vide> : (
-        <Carte className="overflow-x-auto p-0 sm:p-0">
-          <table className="w-full min-w-[340px] text-sm">
+        <Carte className="hidden overflow-x-auto p-0 sm:block sm:p-0">
+          <table className="w-full text-[13px] sm:text-sm">
             <thead>
               <tr className="border-b border-trait text-left text-xs text-doux">
-                <th scope="col" className="px-4 py-3 font-medium">{tb.poste}</th>
+                <th scope="col" className="px-3 py-3 font-medium sm:px-4">{tb.poste}</th>
                 <th scope="col" className="px-2 py-3 text-right font-medium">{tb.estime}</th>
                 <th scope="col" className="px-2 py-3 text-right font-medium">{tb.reel}</th>
-                <th scope="col" className="px-4 py-3 text-right font-medium">{tb.ecart}</th>
+                <th scope="col" className="px-3 py-3 text-right font-medium sm:px-4">{tb.ecart}</th>
                 {droits.editer && <th scope="col"><span className="sr-only">{t.supprimer}</span></th>}
               </tr>
             </thead>
@@ -72,7 +110,7 @@ export function Budget() {
                 const d = ecart(p);
                 return (
                   <tr key={p.id} className="border-b border-trait-fin last:border-none">
-                    <td className="px-4 py-2">
+                    <td className="px-3 py-2 sm:px-4">
                       {droits.editer ? (
                         <CelluleTexte valeur={p.nom} libelle={tb.poste} onValider={(v) => agir(() => sb().update({ nom: v }).eq("id", p.id))} />
                       ) : p.nom}
@@ -83,7 +121,7 @@ export function Budget() {
                     <td className="px-2 py-2 text-right tabular-nums">
                       {droits.editer ? <CelluleMontant valeur={p.reel} libelle={`${tb.reel} – ${p.nom}`} onValider={(v) => modifierMontant(p, "reel", v)} /> : eur(centimes(p.reel))}
                     </td>
-                    <td className={`whitespace-nowrap px-4 py-2 text-right tabular-nums ${d && d > 0 ? "font-semibold text-rouge" : d && d < 0 ? "font-semibold text-vert" : "text-doux"}`}>
+                    <td className={`whitespace-nowrap px-3 py-2 text-right tabular-nums sm:px-4 ${d && d > 0 ? "font-semibold text-rouge" : d && d < 0 ? "font-semibold text-vert" : "text-doux"}`}>
                       {formatEcart(d, langue)}
                       {d !== null && d !== 0 && <span className="sr-only"> ({d > 0 ? tb.depassement : tb.economie})</span>}
                     </td>
@@ -139,7 +177,7 @@ function CelluleMontant({ valeur, libelle, onValider }: { valeur: number | null;
       onChange={(e) => setTexte(e.target.value.replace(/[^\d,.\s]/g, ""))}
       onBlur={() => onValider(texte)}
       onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
-      className="min-h-9 w-24 rounded-lg border border-transparent bg-transparent px-1.5 text-right tabular-nums hover:border-champ focus:border-bordeaux focus:bg-white focus:outline-none"
+      className="min-h-9 w-[4.5rem] rounded-lg sm:w-24 border border-transparent bg-transparent px-1.5 text-right tabular-nums hover:border-champ focus:border-bordeaux focus:bg-white focus:outline-none"
     />
   );
 }

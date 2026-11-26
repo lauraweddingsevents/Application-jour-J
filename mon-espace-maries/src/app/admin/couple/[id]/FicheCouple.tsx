@@ -94,7 +94,7 @@ function Contenu() {
 function Fiche() {
   const { couple } = useEspace();
   return (
-    <div className="grid gap-4 xl:grid-cols-2 xl:items-start">
+    <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-start">
       <div className="flex flex-col gap-4">
         <InfosCouple key={couple.id + couple.formule + couple.date_mariage} />
         <NotesPrivees />

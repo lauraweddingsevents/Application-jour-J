@@ -48,7 +48,7 @@ export function Accueil() {
   return (
     <div className="flex flex-col gap-4">
       {apres ? (
-        <Carte className="flex flex-col gap-3 border-bordeaux bg-bordeaux p-5 text-fond">
+        <Carte accent className="flex flex-col gap-3 p-5">
           <span className="text-fond">{Icones.coeur("size-8")}</span>
           <h1 className="font-titre text-[30px] font-semibold leading-tight">{ta.merciTitre}</h1>
           <p className="text-sm leading-relaxed opacity-90">{ta.merciTexte}</p>
@@ -69,7 +69,7 @@ export function Accueil() {
         </Carte>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          <Carte className="flex flex-col justify-center gap-1 border-bordeaux bg-bordeaux p-5 text-fond">
+          <Carte accent className="flex flex-col justify-center gap-1 p-5">
             {j >= 0 ? (
               <>
                 <span className="font-titre text-5xl font-semibold leading-none">{ta.avant(j)}</span>

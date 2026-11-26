@@ -23,8 +23,10 @@ export function BoutonLien({ variante = "principal", className = "", ...props }:
   return <Link className={`${BASE} ${VARIANTES[variante]} ${className}`} {...props} />;
 }
 
-export function Carte({ className = "", ...props }: ComponentProps<"section">) {
-  return <section className={`rounded-2xl border border-trait bg-carte p-4 sm:p-5 ${className}`} {...props} />;
+// Carte blanche cassée ; « accent » = carte bordeaux (décompte, totaux, remerciements)
+export function Carte({ className = "", accent = false, ...props }: ComponentProps<"section"> & { accent?: boolean }) {
+  const ton = accent ? "border-bordeaux bg-bordeaux text-fond" : "border-trait bg-carte";
+  return <section className={`rounded-2xl border p-4 sm:p-5 ${ton} ${className}`} {...props} />;
 }
 
 export function TitreCarte({ children, className = "" }: { children: ReactNode; className?: string }) {

@@ -68,7 +68,7 @@ export default function MesCouples() {
       <MessageSucces>{message}</MessageSucces>
       {formulaire && <NouveauCouple onCree={(m) => { setFormulaire(false); setMessage(m); recharger(); }} />}
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_320px] lg:items-start">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px] lg:items-start">
         <div className="flex flex-col gap-3 lg:order-2">
           <section className="flex flex-col gap-2 rounded-2xl bg-bordeaux p-4 text-fond">
             <h2 className="text-xs font-semibold uppercase tracking-[0.1em] opacity-85">À traiter</h2>

@@ -17,7 +17,7 @@ export default function Reglages() {
     <>
       <EnTetePage titre="Réglages" />
       <MessageErreur>{erreur}</MessageErreur>
-      <div className="grid gap-4 xl:grid-cols-2 xl:items-start">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-start">
         {donnees ? <LiensAvis initial={donnees} /> : !erreur && <Chargement />}
         <div className="flex flex-col gap-4">
           <ActiverPush t={dico("fr").notifications} />
