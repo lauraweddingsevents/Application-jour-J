@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { BarreProgression, Bouton, Carte, Champ, Chargement, EnTetePage, MessageErreur, MessageSucces, Pastille, Selecteur, Vide } from "@/components/ui";
 import { exiger, useDonnees } from "@/lib/espace";
@@ -122,12 +123,16 @@ function CarteCouple({ c, pct, alerte }: { c: Couple; pct: number; alerte?: stri
         <BarreProgression pourcentage={pct} className="flex-1" />
         <span className="w-10 text-right text-xs text-doux">{pct} %</span>
       </div>
-      {alerte && <Pastille ton="orange" className="self-start">{alerte}</Pastille>}
+      <div className="flex flex-wrap gap-1.5">
+        {!c.invitation_envoyee_le && <Pastille ton="bordeaux">Invitation à envoyer</Pastille>}
+        {alerte && <Pastille ton="orange">{alerte}</Pastille>}
+      </div>
     </Link>
   );
 }
 
 function NouveauCouple({ onCree }: { onCree: (message: string) => void }) {
+  const router = useRouter();
   const [v, setV] = useState({ prenom_1: "", prenom_2: "", date: "", lieu: "", formule: "complete" as Formule, langue: "fr", email_1: "", email_2: "" });
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState("");
@@ -142,11 +147,9 @@ function NouveauCouple({ onCree }: { onCree: (message: string) => void }) {
         p_langue: v.langue, p_email_1: v.email_1, p_email_2: v.email_2,
       });
       if (error) throw error;
-      const r = await fetch("/api/admin/inviter", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ couple: data }) });
-      const envoi = r.ok ? ((await r.json()) as { envoyes: number }) : { envoyes: 0 };
-      onCree(envoi.envoyes > 0
-        ? "Espace créé ! L'invitation est partie par e-mail aux mariés, avec le rétroplanning type, le budget type et le questionnaire déjà chargés."
-        : "Espace créé, avec les modèles types. L'e-mail d'invitation n'a pas pu partir : utilisez « Renvoyer le lien de connexion » dans la fiche couple.");
+      // Aucun e-mail aux mariés à ce stade : Laura prépare l'espace, puis envoie l'invitation depuis la fiche
+      router.push(`/admin/couple/${data}?nouveau=1`);
+      onCree("Espace créé, avec le rétroplanning type, le budget type et le questionnaire.");
     } catch (e) {
       setErreur(messageErreur(e as Error));
     } finally {
@@ -168,7 +171,8 @@ function NouveauCouple({ onCree }: { onCree: (message: string) => void }) {
         <Champ id="nc-e2" libelle={`E-mail de ${v.prenom_2 || "la mariée / du marié 2"}`} type="email" maxLength={200} aide="Chacun a son propre accès (nécessaire pour le questionnaire)." {...champ("email_2")} />
         <div className="flex flex-col gap-2 sm:col-span-2">
           <MessageErreur>{erreur}</MessageErreur>
-          <Bouton type="submit" disabled={enCours} className="min-h-12 sm:self-start">{enCours ? "Création…" : "Créer l'espace et inviter les mariés"}</Bouton>
+          <Bouton type="submit" disabled={enCours} className="min-h-12 sm:self-start">{enCours ? "Création…" : "Créer l'espace"}</Bouton>
+          <p className="text-xs text-doux">Aucun e-mail n&apos;est envoyé aux mariés : vous préparez leur espace, puis vous les invitez depuis leur fiche quand il est prêt.</p>
         </div>
       </form>
     </Carte>

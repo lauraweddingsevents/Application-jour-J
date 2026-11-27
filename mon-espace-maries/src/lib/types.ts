@@ -12,6 +12,7 @@ export type Couple = {
   langue: Langue;
   jeton_invites: string;
   questionnaire_termine_le: string | null;
+  invitation_envoyee_le?: string | null;
   cree_le: string;
 };
 

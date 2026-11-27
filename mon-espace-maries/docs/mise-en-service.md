@@ -12,7 +12,7 @@ myaccount.google.com/apppasswords → créer un mot de passe d'application « Mo
    (Un compte gratuit a 2 projets : si les deux sont pris, créez le projet depuis un autre
    compte, puis invitez votre adresse habituelle comme **Owner**.)
 2. **SQL Editor** → exécuter dans l'ordre le contenu de `supabase/migrations/0001_structure.sql`,
-   `0002_actions_notifications.sql`, `0003_stockage.sql` (copier-coller, puis « Run »).
+   `0002_actions_notifications.sql`, `0003_stockage.sql`, `0004_invitation_manuelle.sql` (copier-coller, puis « Run »).
 3. Vous déclarer administratrice (en remplaçant l'adresse) :
    ```sql
    insert into public.personnes (role, prenom, email) values ('admin', 'Laura', 'votre-adresse@exemple.fr');
