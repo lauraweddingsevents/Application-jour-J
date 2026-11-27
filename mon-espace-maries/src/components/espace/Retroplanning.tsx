@@ -89,6 +89,11 @@ export function Retroplanning() {
                       <span className="flex flex-1 flex-col">
                         <span className="text-[15px] font-medium">{e.nom}</span>
                         {aSous && <span className="text-xs text-doux">{tp.sousEtapes(faites, e.sous.length)}</span>}
+                        {!droits.admin && e.responsable && (
+                          <span className={`mt-0.5 self-start rounded-full px-2 py-0.5 text-[11px] font-semibold ${e.responsable === "laura" ? "bg-bordeaux-pale text-bordeaux" : "bg-neutre-pale text-doux"}`}>
+                            {e.responsable === "laura" ? tp.parLaura : tp.parVous}
+                          </span>
+                        )}
                       </span>
                       {aSous && <span aria-hidden className="w-4 text-center text-lg text-bordeaux">{estOuverte ? "−" : "+"}</span>}
                     </button>
@@ -99,6 +104,9 @@ export function Retroplanning() {
                     <Pastille ton={TON_STATUT[e.statutCalcule]}>{t.statuts[e.statutCalcule]}</Pastille>
                   )}
                 </div>
+                {droits.admin && !edition && (
+                  <ChoixResponsable valeur={e.responsable ?? null} onChange={(responsable) => agir(() => sb().update({ responsable }).eq("id", e.id))} />
+                )}
                 {estOuverte && (
                   <ul className="mb-3 ml-1 flex flex-col gap-1 border-l-2 border-piste pl-3">
                     {e.sous.map((s) => (
@@ -206,5 +214,27 @@ function AjoutSousEtape({ onAjouter, t }: { onAjouter: (nom: string) => void; t:
         <Bouton type="submit" className="min-h-10">{t.ajouter}</Bouton>
       </form>
     </li>
+  );
+}
+
+// Laura : qui s'occupe de l'étape (affiché chez les mariés « Par Laura » / « Par vous »)
+function ChoixResponsable({ valeur, onChange }: { valeur: "laura" | "maries" | null; onChange: (v: "laura" | "maries" | null) => void }) {
+  const options: { v: "laura" | "maries" | null; texte: string }[] = [
+    { v: "laura", texte: "Laura" },
+    { v: "maries", texte: "Les mariés" },
+    { v: null, texte: "—" },
+  ];
+  return (
+    <div className="-mt-1 mb-2.5 flex items-center gap-1.5" role="group" aria-label="Qui s'en occupe">
+      <span className="mr-1 text-[11px] text-doux">Qui s&apos;en occupe :</span>
+      {options.map((o) => (
+        <button key={o.texte} type="button" aria-pressed={valeur === o.v} onClick={() => valeur !== o.v && onChange(o.v)}
+          className={`min-h-7 rounded-full border px-2.5 text-[11px] font-semibold ${
+            valeur === o.v ? (o.v === "laura" ? "border-bordeaux bg-bordeaux text-fond" : "border-encre bg-encre text-fond") : "border-champ bg-white text-doux"
+          }`}>
+          {o.texte}
+        </button>
+      ))}
+    </div>
   );
 }
