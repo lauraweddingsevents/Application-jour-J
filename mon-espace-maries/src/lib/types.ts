@@ -31,6 +31,7 @@ export type Etape = {
   id: string;
   couple_id: string;
   parent_id: string | null;
+  responsable?: "laura" | "maries" | null;
   nom: string;
   statut: Statut;
   ordre: number;

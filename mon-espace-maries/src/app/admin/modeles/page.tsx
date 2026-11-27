@@ -4,7 +4,7 @@ import { Bouton, Carte, Chargement, EnTetePage, MessageErreur, Selecteur, TitreC
 import { exiger, useAgir, useDonnees } from "@/lib/espace";
 import { supabaseNavigateur } from "@/lib/supabase/navigateur";
 
-type Ligne = { id: string; nom: string; ordre: number; estime?: number | null };
+type Ligne = { id: string; nom: string; ordre: number; estime?: number | null; responsable?: "laura" | "maries" | null };
 type QuestionModele = { id: string; theme: string; texte: string; type: "libre" | "choix"; choix: string[]; sous_question: string; sous_question_si: string; ordre: number };
 type Table = "modele_etapes" | "modele_sous_etapes" | "modele_budget";
 
@@ -14,7 +14,7 @@ export default function Modeles() {
     <>
       <EnTetePage titre="Modèles types" intro="Copiés dans chaque nouvel espace à sa création. Les modifier ne change pas les espaces déjà créés." />
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-start">
-        <ListeModele table="modele_etapes" titre="Rétroplanning type" aide="Les étapes qui commencent par « Recherche » reçoivent automatiquement les sous-étapes types." />
+        <ListeModele table="modele_etapes" titre="Rétroplanning type" aide="Les étapes qui commencent par « Recherche » reçoivent automatiquement les sous-étapes types. « Qui » : Laura (L), les mariés (M) ou personne (—)." avecResponsable />
         <ListeModele table="modele_sous_etapes" titre="Sous-étapes d'une recherche de prestataire" aide="Ajoutées à chaque nouvelle « Recherche … », y compris en cours d'organisation." />
         <ListeModele table="modele_budget" titre="Budget type" aide="Montant estimé facultatif." avecMontant />
         <QuestionsModele />
@@ -23,7 +23,7 @@ export default function Modeles() {
   );
 }
 
-function ListeModele({ table, titre, aide, avecMontant = false }: { table: Table; titre: string; aide: string; avecMontant?: boolean }) {
+function ListeModele({ table, titre, aide, avecMontant = false, avecResponsable = false }: { table: Table; titre: string; aide: string; avecMontant?: boolean; avecResponsable?: boolean }) {
   const { donnees, erreur, recharger } = useDonnees(() => exiger(supabaseNavigateur().from(table).select("*").order("ordre")) as Promise<Ligne[]>, [table]);
   const { agir, erreurAction } = useAgir(recharger, "fr");
   const [nouveau, setNouveau] = useState("");
@@ -60,6 +60,15 @@ function ListeModele({ table, titre, aide, avecMontant = false }: { table: Table
                     if (n === null || Number.isFinite(n)) agir(() => sb().update({ estime: n }).eq("id", l.id));
                   }}
                   className="min-h-10 w-20 rounded-[10px] border border-champ bg-white px-2 text-right text-sm" />
+              )}
+              {avecResponsable && (
+                <select aria-label={`Qui s'occupe de ${l.nom}`} value={l.responsable ?? ""}
+                  onChange={(e) => agir(() => sb().update({ responsable: e.target.value || null }).eq("id", l.id))}
+                  className="min-h-10 w-14 rounded-[10px] border border-champ bg-white px-1 text-center text-sm">
+                  <option value="">—</option>
+                  <option value="laura">L</option>
+                  <option value="maries">M</option>
+                </select>
               )}
               <button type="button" aria-label="Monter" disabled={i === 0} onClick={() => deplacer(i, -1)} className="flex size-10 items-center justify-center rounded-[10px] border border-champ bg-white text-bordeaux disabled:opacity-30">↑</button>
               <button type="button" aria-label="Descendre" disabled={i === donnees.length - 1} onClick={() => deplacer(i, 1)} className="flex size-10 items-center justify-center rounded-[10px] border border-champ bg-white text-bordeaux disabled:opacity-30">↓</button>

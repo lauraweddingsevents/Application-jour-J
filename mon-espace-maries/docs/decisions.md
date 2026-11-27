@@ -16,6 +16,11 @@ Choix validés avec Laura (cahier des charges et échanges du 26 novembre 2026).
   « Envoyer l'invitation aux mariés » dans la fiche du couple quand il est prêt.
 - « Mes couples » signale les espaces pas encore partagés (« Invitation à envoyer »).
 
+## Rétroplanning : qui s'en occupe
+- Pour chaque étape, Laura choisit « Laura », « Les mariés » ou rien ; les mariés voient
+  « Par Laura » / « Par vous » sans pouvoir le changer. Une étape ajoutée par les mariés est
+  « par les mariés ». Le choix peut être pré-réglé dans le rétroplanning type.
+
 ## Droits selon la formule
 - **Organisation complète** : rétroplanning, budget, prestataires en lecture seule ; documents partagés par Laura.
 - **Coordination** (jour J, 2 jours, 3 jours) : le couple modifie rétroplanning, budget,

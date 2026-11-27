@@ -99,6 +99,8 @@ select pg_temp.verifier((select count(*) from reponses) = 2, 'après avoir répo
 
 -- ---------- Inès (Coordination) ----------
 select set_config('test.a', :'a', false);
+update etapes set responsable = 'laura' where couple_id = :'b' and nom = 'Devis';
+select pg_temp.verifier((select responsable from etapes where couple_id = :'b' and nom = 'Devis') is null, 'les mariés ne peuvent pas choisir « qui s''en occupe »');
 select pg_temp.en_tant_que('00000000-0000-0000-0000-0000000000b1');
 insert into etapes (couple_id, nom, ordre) values (:'b', 'Recherche officiant', 11);
 select pg_temp.verifier((select count(*) from etapes e join etapes p on p.id = e.parent_id where p.nom = 'Recherche officiant') = 5, 'coordination : nouvelle recherche avec ses 5 sous-étapes');
@@ -122,6 +124,12 @@ select pg_temp.verifier((select count(*) from notifications) = 0, 'le couple ne 
 -- ---------- Laura ----------
 select pg_temp.en_tant_que('00000000-0000-0000-0000-00000000000a');
 select pg_temp.verifier((select count(*) from couples) = 2, 'Laura voit tous les couples');
+update etapes set responsable = 'laura' where couple_id = :'b' and nom = 'Devis';
+select pg_temp.verifier((select responsable from etapes where couple_id = :'b' and nom = 'Devis') = 'laura', 'Laura choisit « qui s''en occupe »');
+select pg_temp.verifier((select responsable from etapes where nom = 'Recherche officiant') = 'maries', 'étape ajoutée par les mariés → « par les mariés »');
+update modele_etapes set responsable = 'maries' where nom = 'Recherche DJ';
+select creer_couple('Léa', 'Paul', current_date + 100, '', 'coordination_3', 'fr', 'lea@exemple.fr', '') as c \gset
+select pg_temp.verifier((select responsable from etapes where couple_id = :'c' and nom = 'Recherche DJ') = 'maries', 'le rétroplanning type transmet « qui s''en occupe »');
 select pg_temp.verifier((select count(*) from notifications where pour_admin) = 3, 'Laura alertée : virement, document, rendez-vous');
 update echeances set statut = 'paye', paye_le = current_date where couple_id = :'a';
 update documents set statut = 'relu', commentaire = 'Tout est clair' where couple_id = :'b';

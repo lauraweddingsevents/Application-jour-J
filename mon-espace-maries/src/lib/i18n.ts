@@ -75,6 +75,8 @@ const fr = {
     nomEtapeAide: "Commencez par « Recherche » (ex. : Recherche officiant) pour recevoir automatiquement les 5 sous-étapes.",
     nomSousEtape: "Nom de la sous-étape",
     statutAuto: "Statut calculé d'après les sous-étapes",
+    parLaura: "Par Laura",
+    parVous: "Par vous",
     vide: "Aucune étape pour le moment.",
   },
 
@@ -355,6 +357,8 @@ const en: Dictionnaire = {
     nomEtapeAide: "Start with “Recherche” (e.g. Recherche officiant) to get the 5 sub-steps automatically.",
     nomSousEtape: "Sub-step name",
     statutAuto: "Status calculated from the sub-steps",
+    parLaura: "By Laura",
+    parVous: "By you",
     vide: "No steps yet.",
   },
 
