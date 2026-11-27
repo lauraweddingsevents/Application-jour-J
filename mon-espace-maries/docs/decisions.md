@@ -11,6 +11,11 @@ Choix validés avec Laura (cahier des charges et échanges du 26 novembre 2026).
 - Pas de connexion à Notion. Lien avec Ma Coordo : déroulé en lecture seule.
 - Tout est construit d'un coup (sections 3 à 6 du cahier des charges).
 
+## Invitation des mariés
+- Créer un couple n'envoie **aucun e-mail** : Laura prépare l'espace, puis clique sur
+  « Envoyer l'invitation aux mariés » dans la fiche du couple quand il est prêt.
+- « Mes couples » signale les espaces pas encore partagés (« Invitation à envoyer »).
+
 ## Droits selon la formule
 - **Organisation complète** : rétroplanning, budget, prestataires en lecture seule ; documents partagés par Laura.
 - **Coordination** (jour J, 2 jours, 3 jours) : le couple modifie rétroplanning, budget,

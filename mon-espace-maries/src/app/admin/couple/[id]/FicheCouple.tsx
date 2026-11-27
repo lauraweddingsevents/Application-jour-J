@@ -100,6 +100,7 @@ function Fiche() {
         <NotesPrivees />
       </div>
       <div className="flex flex-col gap-4">
+        <CarteInvitation />
         <NouvelleTache onAjouter={async (v) => {
           const { error } = await supabaseNavigateur().from("taches").insert({ couple_id: couple.id, ...v });
           if (!error) notifierServeur();
@@ -254,10 +255,12 @@ function AccesDonnees() {
           <li key={m.id}>Dernière connexion de {m.prenom || m.email} : {m.derniere_connexion ? formatDateHeure(m.derniere_connexion) : "jamais"}</li>
         ))}
       </ul>
-      <Bouton variante="contour" className="self-start" disabled={!!enCours} onClick={async () => {
-        const r = await appel("inviter", "/api/admin/inviter", { couple: couple.id });
-        if (r) setMessage(r.envoyes ? `Lien de connexion renvoyé (${r.envoyes} e-mail${r.envoyes > 1 ? "s" : ""}).` : "Aucun e-mail envoyé : vérifiez les réglages d'envoi.");
-      }}>{enCours === "inviter" ? "Envoi…" : "Renvoyer le lien de connexion"}</Bouton>
+      {couple.invitation_envoyee_le && (
+        <Bouton variante="contour" className="self-start" disabled={!!enCours} onClick={async () => {
+          const r = await appel("inviter", "/api/admin/inviter", { couple: couple.id });
+          if (r) setMessage(r.envoyes ? `Lien de connexion renvoyé (${r.envoyes} e-mail${r.envoyes > 1 ? "s" : ""}).` : "Aucun e-mail envoyé : vérifiez les réglages d'envoi.");
+        }}>{enCours === "inviter" ? "Envoi…" : "Renvoyer le lien de connexion"}</Bouton>
+      )}
       <div className="my-1 h-px bg-trait-fin" />
       <p className="text-[13px]">Données conservées jusqu&apos;au {formatDate(dateSuppression(couple.date_mariage))}, puis supprimées automatiquement (6 mois après le mariage).</p>
       <div className="flex flex-wrap gap-2">
@@ -270,6 +273,55 @@ function AccesDonnees() {
       </div>
       <MessageErreur>{erreur}</MessageErreur>
       <MessageSucces>{message}</MessageSucces>
+    </Carte>
+  );
+}
+
+// Invitation des mariés : envoyée par Laura quand l'espace est prêt
+function CarteInvitation() {
+  const { couple, maries, rechargerCouple } = useEspace();
+  const nouveau = useSearchParams().get("nouveau") === "1";
+  const [enCours, setEnCours] = useState(false);
+  const [erreur, setErreur] = useState("");
+  const [message, setMessage] = useState("");
+  const adresses = maries.map((m) => m.email).join(" et ");
+
+  async function inviter() {
+    if (!confirm(`Envoyer l'invitation à ${adresses} ?`)) return;
+    setEnCours(true);
+    setErreur("");
+    try {
+      const r = await fetch("/api/admin/inviter", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ couple: couple.id }) });
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok || !json.envoyes) throw new Error(json.erreur ?? "Aucun e-mail envoyé : vérifiez les réglages d'envoi.");
+      setMessage(`Invitation envoyée (${json.envoyes} e-mail${json.envoyes > 1 ? "s" : ""}).`);
+      await rechargerCouple();
+    } catch (e) {
+      setErreur((e as Error).message);
+    } finally {
+      setEnCours(false);
+    }
+  }
+
+  if (couple.invitation_envoyee_le)
+    return (
+      <Carte className="flex flex-col gap-1 text-[13px]">
+        <TitreCarte>Invitation</TitreCarte>
+        <p className="text-vert">✓ Envoyée le {formatDateHeure(couple.invitation_envoyee_le)}.</p>
+        <MessageSucces>{message}</MessageSucces>
+      </Carte>
+    );
+
+  return (
+    <Carte accent className="flex flex-col gap-2.5">
+      <TitreCarte>Inviter les mariés</TitreCarte>
+      <p className="text-sm leading-relaxed opacity-90">
+        {nouveau ? "Espace créé ! " : ""}Les mariés n&apos;ont encore rien reçu. Préparez leur espace (échéancier, documents, tâches…), puis envoyez-leur l&apos;invitation quand il est prêt.
+      </p>
+      <Bouton variante="secondaire" className="self-start" disabled={enCours || maries.length === 0} onClick={inviter}>
+        {enCours ? "Envoi…" : "Envoyer l'invitation aux mariés"}
+      </Bouton>
+      {erreur && <p className="rounded-lg bg-white px-3 py-2 text-sm text-rouge">{erreur}</p>}
     </Carte>
   );
 }
